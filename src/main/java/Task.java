@@ -11,12 +11,12 @@ public class Task {
         this.marked = true;
     }
 
-    public voic unmark() {
+    public void unmark() {
         this.marked = false;
     }
 
     @Override
     public String toString() {
-        return "[" + (this.marked ? " " : "X") + "] " + this.echo;
+        return "[" + (!this.marked ? " " : "X") + "] " + this.echo;
     }
 }
