@@ -28,6 +28,10 @@ public class Mochi {
         String echo = "init";
         while (!echo.equals("bye")) {
             echo = br.readLine();
+            if (echo.equals("bye")) break;
+            System.out.println("____________________________________________________________");
+            System.out.println(echo);
+            System.out.println("____________________________________________________________\n");
         }
         System.out.println("____________________________________________________________");
         System.out.println("Bye-bye, Please come back soon ദ്ദി(˵ •̀ ᴗ - ˵ ) ✧!!!");
