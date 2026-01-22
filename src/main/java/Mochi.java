@@ -26,11 +26,17 @@ public class Mochi {
         System.out.println("Is there anything I can help you with today?");
         System.out.println("____________________________________________________________");
         String echo = "init";
-        while (!echo.equals("bye")) {
+        ArrayList<String> lst = new ArrayList<>();
+        while (true) {
             echo = br.readLine();
             if (echo.equals("bye")) break;
             System.out.println("____________________________________________________________");
-            System.out.println(echo);
+            if (!echo.equals("list")) {
+                lst.add(echo);
+                System.out.println("added: " + echo);
+            } else {
+                for (int i = 0; i < lst.size(); i++) System.out.println((i + 1) + ". " + lst.get(i));
+            }
             System.out.println("____________________________________________________________\n");
         }
         System.out.println("____________________________________________________________");
