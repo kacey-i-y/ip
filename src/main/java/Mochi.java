@@ -32,6 +32,7 @@ public class Mochi {
             if (echo.equals("bye")) break;
             System.out.println("____________________________________________________________");
             if (echo.equals("list")) {
+                System.out.println("The following tasks are listed in the task list:");
                 for (int i = 0; i < lst.size(); i++) System.out.println((i + 1) + "." + lst.get(i));
             } else if (echo.split(" ")[0].equals("mark")) {
                 System.out.println("Great! I have successfully marked this task as completed:");
@@ -42,6 +43,7 @@ public class Mochi {
                 lst.get(Integer.parseInt(echo.split(" ")[1]) - 1).unmark();
                 System.out.println(lst.get(Integer.parseInt(echo.split(" ")[1]) - 1));
             } else {
+                System.out.println("Success! I just added it to the task list");
                 lst.add(new Task(echo));
                 System.out.println("added: " + echo);
             }
