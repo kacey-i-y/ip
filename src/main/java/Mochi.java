@@ -1,5 +1,9 @@
+import java.util.*;
+import java.io.*;
 public class Mochi {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        PrintWriter pw = new PrintWriter(System.out);
         String logo =
                 "             .@@@@@@@@@@@@@@@.             \n"
                         + "          .@@@@@@@@@@@@@@@@@@@@@.          \n"
@@ -20,6 +24,11 @@ public class Mochi {
         System.out.println("____________________________________________________________");
         System.out.println("Hello I'm MOCHI, your cutest personal chatbot (˶˃ ᵕ ˂˶)");
         System.out.println("Is there anything I can help you with today?");
+        System.out.println("____________________________________________________________");
+        String echo = "init";
+        while (!echo.equals("bye")) {
+            echo = br.readLine();
+        }
         System.out.println("____________________________________________________________");
         System.out.println("Bye-bye, Please come back soon ദ്ദി(˵ •̀ ᴗ - ˵ ) ✧!!!");
         System.out.println("____________________________________________________________");
