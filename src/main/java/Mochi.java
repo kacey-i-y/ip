@@ -50,7 +50,7 @@ public class Mochi {
                 try {
                     lst.get(Integer.parseInt(echo.split(" ")[1]) - 1).mark();
                     System.out.println(lst.get(Integer.parseInt(echo.split(" ")[1]) - 1));
-                    System.out.println("Great! I have successfully marked this task as completed:");
+                    System.out.println("Great! I have successfully marked this task as completed");
                 } catch (RuntimeException e) {
                     Mochi.error();
                 }
@@ -58,7 +58,7 @@ public class Mochi {
                 try {
                     lst.get(Integer.parseInt(echo.split(" ")[1]) - 1).unmark();
                     System.out.println(lst.get(Integer.parseInt(echo.split(" ")[1]) - 1));
-                    System.out.println("Awesome! I have successfully marked this task as not yet completed:");
+                    System.out.println("Awesome! I have successfully marked this task as not yet completed");
                 } catch (RuntimeException e) {
                     Mochi.error();
                 }
@@ -100,7 +100,15 @@ public class Mochi {
                 } catch (ArrayIndexOutOfBoundsException e) {
                     Mochi.error();
                 }
-            } else {
+            } /*else if (echo.split(" ")[0].equals("delete") {
+                try {
+                    lst.get(Integer.parseInt(echo.split(" ")[1]) - 1);
+                    System.out.println(lst.get(Integer.parseInt(echo.split(" ")[1]) - 1));
+                    System.out.println("Okay! I have successfully removed this task from the task list");
+                } catch (RuntimeException e) {
+                    Mochi.error();
+                }
+            } */else {
                 Mochi.error();
             }
             System.out.println("____________________________________________________________\n");
