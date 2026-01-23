@@ -1,6 +1,13 @@
 import java.util.*;
 import java.io.*;
 public class Mochi {
+
+    private static void error() {
+        System.out.println("Error, please follow the specified formats:");
+        System.out.println("todo <task>");
+        System.out.println("deadline <task> /by <deadline>");
+        System.out.println("event <task> /from <from> /to <to>");
+    }
     public static void main(String[] args) throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         PrintWriter pw = new PrintWriter(System.out);
@@ -27,7 +34,7 @@ public class Mochi {
         System.out.println("____________________________________________________________");
         System.out.println("Please follow the following formats:");
         System.out.println("todo <task>");
-        System.out.println("deadline <task> /bye <deadline>");
+        System.out.println("deadline <task> /by <deadline>");
         System.out.println("event <task> /from <from> /to <to>");
         System.out.println("____________________________________________________________");
         String echo = "init";
@@ -40,35 +47,61 @@ public class Mochi {
                 System.out.println("The following tasks are listed in the task list:");
                 for (int i = 0; i < lst.size(); i++) System.out.println((i + 1) + "." + lst.get(i));
             } else if (echo.split(" ")[0].equals("mark")) {
-                System.out.println("Great! I have successfully marked this task as completed:");
-                lst.get(Integer.parseInt(echo.split(" ")[1]) - 1).mark();
-                System.out.println(lst.get(Integer.parseInt(echo.split(" ")[1]) - 1));
+                try {
+                    lst.get(Integer.parseInt(echo.split(" ")[1]) - 1).mark();
+                    System.out.println(lst.get(Integer.parseInt(echo.split(" ")[1]) - 1));
+                    System.out.println("Great! I have successfully marked this task as completed:");
+                } catch (RuntimeException e) {
+                    Mochi.error();
+                }
             } else if (echo.split(" ")[0].equals("unmark")) {
-                System.out.println("Awesome! I have successfully marked this task as not yet completed:");
-                lst.get(Integer.parseInt(echo.split(" ")[1]) - 1).unmark();
-                System.out.println(lst.get(Integer.parseInt(echo.split(" ")[1]) - 1));
+                try {
+                    lst.get(Integer.parseInt(echo.split(" ")[1]) - 1).unmark();
+                    System.out.println(lst.get(Integer.parseInt(echo.split(" ")[1]) - 1));
+                    System.out.println("Awesome! I have successfully marked this task as not yet completed:");
+                } catch (RuntimeException e) {
+                    Mochi.error();
+                }
             } else if (echo.split(" ")[0].equals("todo")) {
-                System.out.println("Success! I just added it to the task list");
-                lst.add(new Todo(echo.split("todo ")[1]));
-                System.out.println(lst.get(lst.size() - 1));
-                System.out.println("Currently, we have " + lst.size() + " tasks on the list");
+                try {
+                    if (!echo.split(" ")[1].equals("")) {
+                        System.out.println("Success! I just added it to the task list");
+                        lst.add(new Todo(echo.split("todo ")[1]));
+                        System.out.println(lst.get(lst.size() - 1));
+                        System.out.println("Currently, we have " + lst.size() + " tasks on the list");
+                    } else Mochi.error();
+                } catch (ArrayIndexOutOfBoundsException e) {
+                    Mochi.error();
+                }
             } else if (echo.split(" ")[0].equals("deadline")) {
-                System.out.println("Success! I just added it to the task list");
-                lst.add(new Deadline(echo.split("deadline ")[1].split(" /by ")[0],
-                        echo.split(" /by ")[1]));
-                System.out.println(lst.get(lst.size() - 1));
-                System.out.println("Currently, we have " + lst.size() + " tasks on the list");
+                try {
+                    if (!echo.split("deadline ")[1].split(" /by ")[0].equals("")
+                            && !echo.split(" /by ")[1].equals("")) {
+                        System.out.println("Success! I just added it to the task list");
+                        lst.add(new Deadline(echo.split("deadline ")[1].split(" /by ")[0],
+                                echo.split(" /by ")[1]));
+                        System.out.println(lst.get(lst.size() - 1));
+                        System.out.println("Currently, we have " + lst.size() + " tasks on the list");
+                    } else Mochi.error();
+                } catch (ArrayIndexOutOfBoundsException e) {
+                    Mochi.error();
+                }
             } else if (echo.split(" ")[0].equals("event")) {
-                System.out.println("Success! I just added it to the task list");
-                lst.add(new Event(echo.split("event ")[1].split(" /from ")[0],
-                        echo.split(" /from ")[1].split(" /to ")[0], echo.split(" /to ")[1]));
-                System.out.println(lst.get(lst.size() - 1));
-                System.out.println("Currently, we have " + lst.size() + " tasks on the list");
+                try {
+                    if (!echo.split("event ")[1].split(" /from ")[0].equals("")
+                            && !echo.split(" /from ")[1].split(" /to ")[0].equals("")
+                            && !echo.split(" /to ")[1].equals("")) {
+                        System.out.println("Success! I just added it to the task list");
+                        lst.add(new Event(echo.split("event ")[1].split(" /from ")[0],
+                                echo.split(" /from ")[1].split(" /to ")[0], echo.split(" /to ")[1]));
+                        System.out.println(lst.get(lst.size() - 1));
+                        System.out.println("Currently, we have " + lst.size() + " tasks on the list");
+                    } else Mochi.error();
+                } catch (ArrayIndexOutOfBoundsException e) {
+                    Mochi.error();
+                }
             } else {
-                System.out.println("Error, please follow the specified formats:");
-                System.out.println("todo <task>");
-                System.out.println("deadline <task> /bye <deadline>");
-                System.out.println("event <task> /from <from> /to <to>");
+                Mochi.error();
             }
             System.out.println("____________________________________________________________\n");
         }

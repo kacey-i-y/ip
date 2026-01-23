@@ -17,6 +17,11 @@ ____________________________________________________________
 Hello I'm MOCHI, your cutest personal chatbot (˶˃ ᵕ ˂˶)
 Is there anything I can help you with today?
 ____________________________________________________________
+Please follow the following formats:
+todo <task>
+deadline <task> /by <deadline>
+event <task> /from <from> /to <to>
+____________________________________________________________
 ____________________________________________________________
 Success! I just added it to the task list
 [T][ ] say hello
