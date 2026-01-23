@@ -42,10 +42,23 @@ public class Mochi {
                 System.out.println("Awesome! I have successfully marked this task as not yet completed:");
                 lst.get(Integer.parseInt(echo.split(" ")[1]) - 1).unmark();
                 System.out.println(lst.get(Integer.parseInt(echo.split(" ")[1]) - 1));
-            } else {
+            } else if (echo.split(" ")[0].equals("todo")) {
                 System.out.println("Success! I just added it to the task list");
-                lst.add(new Task(echo));
-                System.out.println("added: " + echo);
+                lst.add(new Todo(echo.split("todo ")[1]));
+                System.out.println(lst.get(lst.size() - 1));
+                System.out.println("Currently, we have " + lst.size() + " tasks on the list");
+            } else if (echo.split(" ")[0].equals("deadline")) {
+                System.out.println("Success! I just added it to the task list");
+                lst.add(new Deadline(echo.split("deadline ")[1].split(" /by ")[0],
+                        echo.split(" /by ")[1]));
+                System.out.println(lst.get(lst.size() - 1));
+                System.out.println("Currently, we have " + lst.size() + " tasks on the list");
+            } else if (echo.split(" ")[0].equals("event")) {
+                System.out.println("Success! I just added it to the task list");
+                lst.add(new Event(echo.split("event ")[1].split(" /from ")[0],
+                        echo.split(" /from ")[1].split(" /to ")[0], echo.split(" /to ")[1]));
+                System.out.println(lst.get(lst.size() - 1));
+                System.out.println("Currently, we have " + lst.size() + " tasks on the list");
             }
             System.out.println("____________________________________________________________\n");
         }
