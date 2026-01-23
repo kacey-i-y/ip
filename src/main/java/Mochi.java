@@ -7,6 +7,9 @@ public class Mochi {
         System.out.println("todo <task>");
         System.out.println("deadline <task> /by <deadline>");
         System.out.println("event <task> /from <from> /to <to>");
+        System.out.println("mark <number>");
+        System.out.println("unmark <number>");
+        System.out.println("delete <number>");
     }
     public static void main(String[] args) throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
@@ -100,15 +103,17 @@ public class Mochi {
                 } catch (ArrayIndexOutOfBoundsException e) {
                     Mochi.error();
                 }
-            } /*else if (echo.split(" ")[0].equals("delete") {
+            } else if (echo.split(" ")[0].equals("delete")) {
                 try {
-                    lst.get(Integer.parseInt(echo.split(" ")[1]) - 1);
-                    System.out.println(lst.get(Integer.parseInt(echo.split(" ")[1]) - 1));
+                    Task temp = lst.get(Integer.parseInt(echo.split(" ")[1]) - 1);
+                    lst.remove(Integer.parseInt(echo.split(" ")[1]) - 1);
+                    System.out.println(temp);
                     System.out.println("Okay! I have successfully removed this task from the task list");
+                    System.out.println("Currently, we have " + lst.size() + " tasks on the list");
                 } catch (RuntimeException e) {
                     Mochi.error();
                 }
-            } */else {
+            } else {
                 Mochi.error();
             }
             System.out.println("____________________________________________________________\n");
