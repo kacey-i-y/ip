@@ -25,6 +25,11 @@ public class Mochi {
         System.out.println("Hello I'm MOCHI, your cutest personal chatbot (˶˃ ᵕ ˂˶)");
         System.out.println("Is there anything I can help you with today?");
         System.out.println("____________________________________________________________");
+        System.out.println("Please follow the following formats:");
+        System.out.println("todo <task>");
+        System.out.println("deadline <task> /bye <deadline>");
+        System.out.println("event <task> /from <from> /to <to>");
+        System.out.println("____________________________________________________________");
         String echo = "init";
         ArrayList<Task> lst = new ArrayList<>();
         while (true) {
@@ -59,6 +64,11 @@ public class Mochi {
                         echo.split(" /from ")[1].split(" /to ")[0], echo.split(" /to ")[1]));
                 System.out.println(lst.get(lst.size() - 1));
                 System.out.println("Currently, we have " + lst.size() + " tasks on the list");
+            } else {
+                System.out.println("Error, please follow the specified formats:");
+                System.out.println("todo <task>");
+                System.out.println("deadline <task> /bye <deadline>");
+                System.out.println("event <task> /from <from> /to <to>");
             }
             System.out.println("____________________________________________________________\n");
         }
