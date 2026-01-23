@@ -1,0 +1,70 @@
+____________________________________________________________
+             .@@@@@@@@@@@@@@@.
+          .@@@@@@@@@@@@@@@@@@@@@.
+        .@@@@@@@@@@@@@@@@@@@@@@@@@.
+       @@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+      @@@@@@   (* )     ( *)   @@@@@@
+      @@@@@@       .  ^  .       @@@@@@
+       @@@@@@@      ' w '      @@@@@@@
+        @@@@@@@@.           .@@@@@@@@
+          "@@@@@@@@@@@@@@@@@@@@@@@"
+      __  __   ____    ____  _   _  ___
+     |  \/  | / __ \  / ___|| | | ||_ _|
+     | |\/| || |  | || |    | |_| | | |
+     | |  | || |__| || |___ |  _  | | |
+     |_|  |_| \____/  \____||_| |_||___|
+____________________________________________________________
+Hello I'm MOCHI, your cutest personal chatbot (˶˃ ᵕ ˂˶)
+Is there anything I can help you with today?
+____________________________________________________________
+____________________________________________________________
+Success! I just added it to the task list
+[T][ ] say hello
+Currently, we have 1 tasks on the list
+____________________________________________________________
+
+____________________________________________________________
+Success! I just added it to the task list
+[D][ ] do something (by: tomorrow)
+Currently, we have 2 tasks on the list
+____________________________________________________________
+
+____________________________________________________________
+Success! I just added it to the task list
+[E][ ] say goodbye (from: after doing something to: one week)
+Currently, we have 3 tasks on the list
+____________________________________________________________
+
+____________________________________________________________
+Great! I have successfully marked this task as completed:
+[T][X] say hello
+____________________________________________________________
+
+____________________________________________________________
+Great! I have successfully marked this task as completed:
+[D][X] do something (by: tomorrow)
+____________________________________________________________
+
+____________________________________________________________
+Great! I have successfully marked this task as completed:
+[E][X] say goodbye (from: after doing something to: one week)
+____________________________________________________________
+
+____________________________________________________________
+Awesome! I have successfully marked this task as not yet completed:
+[T][ ] say hello
+____________________________________________________________
+
+____________________________________________________________
+Awesome! I have successfully marked this task as not yet completed:
+[D][ ] do something (by: tomorrow)
+____________________________________________________________
+
+____________________________________________________________
+Awesome! I have successfully marked this task as not yet completed:
+[E][ ] say goodbye (from: after doing something to: one week)
+____________________________________________________________
+
+____________________________________________________________
+Bye-bye, Please come back soon ദ്ദി(˵ •̀ ᴗ - ˵ ) ✧!!!
+____________________________________________________________
