@@ -1,15 +1,42 @@
-import java.util.*;
-import java.io.*;
+package mochi;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+
+import mochi.task.Deadline;
+import mochi.task.Event;
+import mochi.task.Task;
+import mochi.task.Todo;
+
+/**
+ * A simple CLI chatbot that manages a list of tasks (to-dos, deadlines, and events).
+ */
 public class Mochi {
 
+    /**
+     * Supported user commands.
+     */
     private enum Command {
         LIST, MARK, UNMARK, TODO, DEADLINE, EVENT, DELETE, BYE, UNKNOWN;
 
+        /**
+         * Parses the first token of the user input and maps it to a command.
+         *
+         * @param input The full user input line.
+         * @return The parsed {@code Command}, or {@code UNKNOWN} if not recognized.
+         */
         static Command from(String input) {
-            if (input == null) return UNKNOWN;
+            if (input == null) {
+                return UNKNOWN;
+            }
+
             String trimmed = input.trim();
-            if (trimmed.isEmpty()) return UNKNOWN;
+            if (trimmed.isEmpty()) {
+                return UNKNOWN;
+            }
+
             String first = trimmed.split(" ")[0].toLowerCase();
             return switch (first) {
                 case "list" -> LIST;
@@ -25,6 +52,9 @@ public class Mochi {
         }
     }
 
+    /**
+     * Prints an error message and a reminder of the accepted input formats.
+     */
     private static void error() {
         System.out.println("Error, please follow the specified formats:");
         System.out.println("todo <task>");
@@ -36,10 +66,14 @@ public class Mochi {
         System.out.println("list");
     }
 
+    /**
+     * Runs the chatbot in a read-eval-print loop.
+     *
+     * @param args Command line arguments (unused).
+     * @throws IOException If an I/O error occurs while reading user input.
+     */
     public static void main(String[] args) throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-        PrintWriter pw = new PrintWriter(System.out); // still unused, preserved
-
         String logo =
                 "             .@@@@@@@@@@@@@@@.\n"
                         + "          .@@@@@@@@@@@@@@@@@@@@@.\n"
@@ -49,7 +83,7 @@ public class Mochi {
                         + "      @@@@@@       .  ^  .       @@@@@@\n"
                         + "       @@@@@@@      ' w '      @@@@@@@\n"
                         + "        @@@@@@@@.           .@@@@@@@@\n"
-                        + "          \"@@@@@@@@@@@@@@@@@@@@@@@\"\n"
+                        + "          \"@@@@@@@@@@@@@@@@@@@@@@@\"" + "\n"
                         + "      __  __   ____    ____  _   _  ___\n"
                         + "     |  \\/  | / __ \\  / ___|| | | ||_ _|\n"
                         + "     | |\\/| || |  | || |    | |_| | | |\n"
@@ -79,7 +113,9 @@ public class Mochi {
             echo = br.readLine();
 
             Command cmd = Command.from(echo);
-            if (cmd == Command.BYE) break;
+            if (cmd == Command.BYE) {
+                break;
+            }
 
             System.out.println("____________________________________________________________");
 
@@ -127,7 +163,8 @@ public class Mochi {
                         if (!echo.split("deadline ")[1].split(" /by ")[0].equals("")
                                 && !echo.split(" /by ")[1].equals("")) {
                             System.out.println("Success! I just added it to the task list");
-                            lst.add(new Deadline(echo.split("deadline ")[1].split(" /by ")[0],
+                            lst.add(new Deadline(
+                                    echo.split("deadline ")[1].split(" /by ")[0],
                                     echo.split(" /by ")[1]));
                             System.out.println(lst.get(lst.size() - 1));
                             System.out.println("Currently, we have " + lst.size() + " tasks on the list");
@@ -144,7 +181,8 @@ public class Mochi {
                                 && !echo.split(" /from ")[1].split(" /to ")[0].equals("")
                                 && !echo.split(" /to ")[1].equals("")) {
                             System.out.println("Success! I just added it to the task list");
-                            lst.add(new Event(echo.split("event ")[1].split(" /from ")[0],
+                            lst.add(new Event(
+                                    echo.split("event ")[1].split(" /from ")[0],
                                     echo.split(" /from ")[1].split(" /to ")[0],
                                     echo.split(" /to ")[1]));
                             System.out.println(lst.get(lst.size() - 1));
