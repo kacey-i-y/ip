@@ -110,15 +110,6 @@ public class Mochi {
         System.out.println("Hello I'm MOCHI, your cutest personal chatbot (˶˃ ᵕ ˂˶)");
         System.out.println("Is there anything I can help you with today?");
         Mochi.printLine();
-        System.out.println("Please follow the following formats:");
-        System.out.println("todo <task>");
-        System.out.println("deadline <task> /by <deadline>");
-        System.out.println("event <task> /from <from> /to <to>");
-        System.out.println("mark <number>");
-        System.out.println("unmark <number>");
-        System.out.println("delete <number>");
-        System.out.println("list");
-        Mochi.printLine();
 
         String echo = "init";
         ArrayList<Task> lst = new ArrayList<>();
@@ -162,10 +153,27 @@ public class Mochi {
                         System.out.println("Error reading line :\n" + line);
                     }
                 }
+                System.out.println("Successfully read from hard disk");
+                System.out.println("The following tasks are listed in the task list:");
+                for (int i = 0; i < lst.size(); i++) {
+                    System.out.println((i + 1) + "." + lst.get(i));
+                }
             } catch (IOException e) {
                 System.out.println("Error reading save file: " + e.getMessage());
             }
         }
+        Mochi.printLine();
+
+        System.out.println("Please follow the following formats:");
+        System.out.println("todo <task>");
+        System.out.println("deadline <task> /by <deadline>");
+        System.out.println("event <task> /from <from> /to <to>");
+        System.out.println("mark <number>");
+        System.out.println("unmark <number>");
+        System.out.println("delete <number>");
+        System.out.println("list");
+        System.out.println("bye");
+        Mochi.printLine();
 
         while (true) {
             echo = br.readLine();
