@@ -53,6 +53,13 @@ public class Mochi {
     }
 
     /**
+     * Prints one single horizontal line to indicate different sections
+     */
+    private static void printLine() {
+        System.out.println("____________________________________________________________");
+    }
+
+    /**
      * Prints an error message and a reminder of the accepted input formats.
      */
     private static void error() {
@@ -90,12 +97,12 @@ public class Mochi {
                         + "     | |  | || |__| || |___ |  _  | | |\n"
                         + "     |_|  |_| \\____/  \\____||_| |_||___|\n";
 
-        System.out.println("____________________________________________________________");
+        Mochi.printLine();
         System.out.print(logo);
-        System.out.println("____________________________________________________________");
+        Mochi.printLine();
         System.out.println("Hello I'm MOCHI, your cutest personal chatbot (˶˃ ᵕ ˂˶)");
         System.out.println("Is there anything I can help you with today?");
-        System.out.println("____________________________________________________________");
+        Mochi.printLine();
         System.out.println("Please follow the following formats:");
         System.out.println("todo <task>");
         System.out.println("deadline <task> /by <deadline>");
@@ -104,7 +111,7 @@ public class Mochi {
         System.out.println("unmark <number>");
         System.out.println("delete <number>");
         System.out.println("list");
-        System.out.println("____________________________________________________________");
+        Mochi.printLine();
 
         String echo = "init";
         ArrayList<Task> lst = new ArrayList<>();
@@ -117,7 +124,7 @@ public class Mochi {
                 break;
             }
 
-            System.out.println("____________________________________________________________");
+            Mochi.printLine();
 
             switch (cmd) {
                 case LIST -> {
@@ -208,11 +215,12 @@ public class Mochi {
                 default -> Mochi.error();
             }
 
-            System.out.println("____________________________________________________________\n");
+            Mochi.printLine();
+            Mochi.printLine();
         }
 
-        System.out.println("____________________________________________________________");
+        Mochi.printLine();
         System.out.println("Bye-bye, Please come back soon দ্দি(˵ •̀ ᴗ - ˵ ) ✧!!!");
-        System.out.println("____________________________________________________________");
+        Mochi.printLine();
     }
 }
