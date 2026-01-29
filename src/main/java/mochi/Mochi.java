@@ -1,7 +1,11 @@
 package mochi;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
@@ -15,6 +19,8 @@ import mochi.task.Todo;
  * A simple CLI chatbot that manages a list of tasks (to-dos, deadlines, and events).
  */
 public class Mochi {
+    private static final String DATA_PATH = "data";
+    private static final String FILE_NAME = "mochi.txt";
 
     /**
      * Supported user commands.
@@ -116,6 +122,50 @@ public class Mochi {
 
         String echo = "init";
         ArrayList<Task> lst = new ArrayList<>();
+        File file = new File(DATA_PATH, FILE_NAME);
+        if (!file.exists()) {
+            System.out.println("Folder/file is not present");
+            System.out.println("Continuing with an empty list");
+        } else {
+            try (BufferedReader fr = new BufferedReader(new FileReader(file))) {
+                String line;
+                String[] inputs;
+                while ((line = fr.readLine()) != null) {
+                    try {
+                        inputs = line.split("\\s*\\|\\s*");
+                        Task current;
+                        switch (inputs[0].toUpperCase()) {
+                            case "T":
+                                current = new Todo(inputs[2]);
+                                break;
+                            case "D":
+                                current = new Deadline(inputs[2], inputs[3]);
+                                break;
+                            case "E":
+                                current = new Event(inputs[2], inputs[3], inputs[4]);
+                                break;
+                            default:
+                                throw new RuntimeException();
+                        }
+                        switch (Integer.parseInt(inputs[1])) {
+                            case 1:
+                                current.mark();
+                                break;
+                            case 0:
+                                current.unmark();
+                                break;
+                            default:
+                                throw new RuntimeException();
+                        }
+                        lst.add(current);
+                    }  catch (RuntimeException e) {
+                        System.out.println("Error reading line :\n" + line);
+                    }
+                }
+            } catch (IOException e) {
+                System.out.println("Error reading save file: " + e.getMessage());
+            }
+        }
 
         while (true) {
             echo = br.readLine();
@@ -216,7 +266,6 @@ public class Mochi {
                 default -> Mochi.error();
             }
 
-            Mochi.printLine();
             Mochi.printLine();
         }
 
