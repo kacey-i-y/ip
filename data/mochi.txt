@@ -1,0 +1,5 @@
+T | 1 | say hello
+T | 0 | say goodbye
+D | 1 | do homework | tomorrow
+D | 1 | say hi to everyone | today
+T | 1 | play games

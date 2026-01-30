@@ -11,16 +11,31 @@ public class Deadline extends Task {
     /**
      * Creates a deadline task.
      *
-     * @param echo The task description.
+     * @param description The task description.
      * @param by The deadline (e.g. date/time).
      */
-    public Deadline(String echo, String by) {
-        super(echo);
+    public Deadline(String description, String by) {
+        super(description);
         this.by = by;
     }
 
+    /**
+     * Returns the UI representation of this deadline task.
+     *
+     * @return A formatted string for display.
+     */
     @Override
     public String toString() {
-        return "[D]" + super.toString() + " (by: " + this.by + ")";
+        return "[D] " + super.toString() + " (by: " + this.by + ")";
+    }
+
+    /**
+     * Returns the save-file representation of this deadline task.
+     *
+     * @return A formatted string for storage.
+     */
+    @Override
+    public String toWrite() {
+        return "D | " + super.toWrite() + " | " + this.by;
     }
 }
