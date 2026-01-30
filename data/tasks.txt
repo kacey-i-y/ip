@@ -3,4 +3,4 @@ T | 0 | say goodbye
 D | 1 | do homework | 2026-01-31
 D | 1 | say hi to everyone | 2026-01-30
 E | 1 | project meeting | 2026-02-01 1800 | 2026-02-01 2000
-T | 1 | play games
+E | 0 | do something | 2020-01-01 0000 | 2020-01-02 0000

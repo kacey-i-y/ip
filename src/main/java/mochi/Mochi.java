@@ -4,18 +4,13 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
-
 import mochi.storage.Storage;
 
-import mochi.task.Deadline;
-import mochi.task.Event;
 import mochi.task.Task;
-import mochi.task.Todo;
 import mochi.task.TaskList;
+
+import mochi.parser.Parser;
+import mochi.parser.Parser.ParsedCommand;
 
 /**
  * Main entry point for the Mochi CLI chatbot.
@@ -27,46 +22,6 @@ public class Mochi {
     private static final String DATA_DIR_NAME = "data";
     private static final String SAVE_FILE_NAME = "tasks.txt";
     private static final String SEPARATOR = "____________________________________________________________";
-    private static final String PIPE_SPLIT_REGEX = "\\s*\\|\\s*";
-    private static final DateTimeFormatter EVENT_INPUT_FORMAT =
-            DateTimeFormatter.ofPattern("yyyy-MM-dd HHmm");
-
-    /**
-     * Supported user commands.
-     */
-    private enum Command {
-        LIST, MARK, UNMARK, TODO, DEADLINE, EVENT, DELETE, BYE, UNKNOWN;
-
-        /**
-         * Parses the first token of the user input and maps it to a command.
-         *
-         * @param input Full user input line.
-         * @return Parsed command, or {@code UNKNOWN} if not recognized.
-         */
-        static Command from(String input) {
-            if (input == null) {
-                return UNKNOWN;
-            }
-
-            String trimmed = input.trim();
-            if (trimmed.isEmpty()) {
-                return UNKNOWN;
-            }
-
-            String firstToken = trimmed.split("\\s+")[0].toLowerCase();
-            return switch (firstToken) {
-                case "list" -> LIST;
-                case "mark" -> MARK;
-                case "unmark" -> UNMARK;
-                case "todo" -> TODO;
-                case "deadline" -> DEADLINE;
-                case "event" -> EVENT;
-                case "delete" -> DELETE;
-                case "bye" -> BYE;
-                default -> UNKNOWN;
-            };
-        }
-    }
 
     /**
      * Runs the chatbot in a read-eval-print loop.
@@ -96,14 +51,23 @@ public class Mochi {
                 break;
             }
 
-            Command command = Command.from(userInput);
-            if (command == Command.BYE) {
+            ParsedCommand parsed;
+            try {
+                parsed = Parser.parse(userInput);
+            } catch (IllegalArgumentException e) {
+                printSeparator();
+                printError();
+                printSeparator();
+                continue;
+            }
+
+            if (parsed.command() == Parser.Command.BYE) {
                 break;
             }
 
             printSeparator();
 
-            boolean hasChanged = handleCommand(command, userInput, taskList);
+            boolean hasChanged = handleCommand(parsed, taskList);
             if (hasChanged) {
                 try {
                     storage.save(taskList);
@@ -118,30 +82,25 @@ public class Mochi {
         printGoodbye();
     }
 
-    /**
-     * Handles a single command, printing responses and modifying the task list if needed.
-     *
-     * @param command Parsed command type.
-     * @param input Raw user input.
-     * @param tasks Current in-memory task list.
-     * @return {@code true} if the task list was modified, {@code false} otherwise.
-     */
-    private static boolean handleCommand(Command command, String input, TaskList tasks) {
-        return switch (command) {
+
+    private static boolean handleCommand(ParsedCommand parsed, TaskList tasks) {
+        return switch (parsed.command()) {
             case LIST -> {
                 printTasks(tasks);
                 yield false;
             }
-            case MARK -> markTask(tasks, input, true);
-            case UNMARK -> markTask(tasks, input, false);
-            case TODO -> addTodo(tasks, input);
-            case DEADLINE -> addDeadline(tasks, input);
-            case EVENT -> addEvent(tasks, input);
-            case DELETE -> deleteTask(tasks, input);
-            default -> {
-                printError();
-                yield false;
+            case MARK -> markTask(tasks, parsed.index(), true);
+            case UNMARK -> markTask(tasks, parsed.index(), false);
+            case DELETE -> deleteTask(tasks, parsed.index());
+
+            case TODO, DEADLINE, EVENT -> {
+                tasks.add(parsed.task());
+                System.out.println("Added: " + parsed.task());
+                System.out.println("Currently, we have " + tasks.size() + " task(s) on the list.");
+                yield true;
             }
+
+            case BYE -> false; // already handled in main loop
         };
     }
 
@@ -162,9 +121,8 @@ public class Mochi {
         }
     }
 
-    private static boolean markTask(TaskList tasks, String input, boolean shouldMark) {
+    private static boolean markTask(TaskList tasks, int index, boolean shouldMark) {
         try {
-            int index = Integer.parseInt(input.split("\\s+")[1]) - 1;
             Task task = tasks.get(index);
 
             if (shouldMark) {
@@ -175,102 +133,20 @@ public class Mochi {
                 System.out.println("Marked as not done: " + task);
             }
             return true;
-        } catch (NumberFormatException | IndexOutOfBoundsException e) {
+        } catch (IndexOutOfBoundsException e) {
             printError();
             return false;
         }
     }
 
-    private static boolean deleteTask(TaskList tasks, String input) {
+    private static boolean deleteTask(TaskList tasks, int index) {
         try {
-            int index = Integer.parseInt(input.split("\\s+")[1]) - 1;
             Task removed = tasks.remove(index);
 
             System.out.println("Removed: " + removed);
             System.out.println("Currently, we have " + tasks.size() + " task(s) on the list.");
             return true;
-        } catch (NumberFormatException | IndexOutOfBoundsException e) {
-            printError();
-            return false;
-        }
-    }
-
-    private static boolean addTodo(TaskList tasks, String input) {
-        try {
-            String description = input.split("todo\\s+", 2)[1].trim();
-            if (description.isEmpty()) {
-                printError();
-                return false;
-            }
-
-            Task task = new Todo(description);
-            tasks.add(task);
-
-            System.out.println("Added: " + task);
-            System.out.println("Currently, we have " + tasks.size() + " task(s) on the list.");
-            return true;
-        } catch (ArrayIndexOutOfBoundsException e) {
-            printError();
-            return false;
-        }
-    }
-
-    private static boolean addDeadline(TaskList tasks, String input) {
-        try {
-            String body = input.split("deadline\\s+", 2)[1];
-            String[] parts = body.split("\\s*/by\\s*", 2);
-
-            String description = parts[0].trim();
-            String byRaw = parts[1].trim();
-
-            if (description.isEmpty() || byRaw.isEmpty()) {
-                printError();
-                return false;
-            }
-
-            LocalDate byDate = LocalDate.parse(byRaw);
-            Task task = new Deadline(description, byDate);
-            tasks.add(task);
-
-            System.out.println("Added: " + task);
-            System.out.println("Currently, we have " + tasks.size() + " task(s) on the list.");
-            return true;
-        } catch (ArrayIndexOutOfBoundsException | DateTimeParseException e) {
-            printError();
-            return false;
-        }
-    }
-
-    private static boolean addEvent(TaskList tasks, String input) {
-        try {
-            String body = input.split("event\\s+", 2)[1];
-            String[] first = body.split("\\s*/from\\s*", 2);
-            String[] second = first[1].split("\\s*/to\\s*", 2);
-
-            String description = first[0].trim();
-            String fromRaw = second[0].trim();
-            String toRaw = second[1].trim();
-
-            if (description.isEmpty() || fromRaw.isEmpty() || toRaw.isEmpty()) {
-                printError();
-                return false;
-            }
-
-            LocalDateTime fromDateTime = LocalDateTime.parse(fromRaw, EVENT_INPUT_FORMAT);
-            LocalDateTime toDateTime = LocalDateTime.parse(toRaw, EVENT_INPUT_FORMAT);
-
-            if (!toDateTime.isAfter(fromDateTime)) {
-                System.out.println("Error: /to must be after /from.");
-                return false;
-            }
-
-            Task task = new Event(description, fromDateTime, toDateTime);
-            tasks.add(task);
-
-            System.out.println("Added: " + task);
-            System.out.println("Currently, we have " + tasks.size() + " task(s) on the list.");
-            return true;
-        } catch (ArrayIndexOutOfBoundsException | DateTimeParseException e) {
+        } catch (IndexOutOfBoundsException e) {
             printError();
             return false;
         }
