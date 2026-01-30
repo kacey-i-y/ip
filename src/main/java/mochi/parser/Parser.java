@@ -10,21 +10,74 @@ import mochi.task.Event;
 import mochi.task.Task;
 import mochi.task.Todo;
 
+/**
+ * Parses user input into structured commands for Mochi.
+ *
+ * <p>This class converts raw CLI strings (e.g. {@code "deadline read book /by 2026-01-30"})
+ * into a {@link ParsedCommand} object that contains:
+ * <ul>
+ *   <li>a {@link Command} type</li>
+ *   <li>an optional 0-based index for commands like mark/unmark/delete</li>
+ *   <li>an optional {@link Task} object for commands that create tasks</li>
+ * </ul>
+ *
+ * <p>Design note: This is a utility class (no instances). All parsing logic is centralized
+ * here to keep UI and storage responsibilities separate.
+ *
+ * @author Kacey Isaiah Yonathan
+ */
 public class Parser {
+
+    /** Date-time format accepted for event times: {@code yyyy-MM-dd HHmm}. */
     private static final DateTimeFormatter EVENT_INPUT_FORMAT =
             DateTimeFormatter.ofPattern("yyyy-MM-dd HHmm");
 
+    /**
+     * Prevents instantiation of this utility class.
+     */
     private Parser() {
         // Utility class: prevent instantiation.
     }
 
+    /**
+     * Supported user commands recognized by the parser.
+     */
     public enum Command {
-        LIST, MARK, UNMARK, TODO, DEADLINE, EVENT, DELETE, BYE;
+        LIST, MARK, UNMARK, TODO, DEADLINE, EVENT, DELETE, BYE
     }
 
+    /**
+     * Represents a parsed command produced from user input.
+     *
+     * <p>Conventions:
+     * <ul>
+     *   <li>{@code index} is 0-based when used; otherwise {@code -1}</li>
+     *   <li>{@code task} is non-null only for TODO/DEADLINE/EVENT; otherwise {@code null}</li>
+     * </ul>
+     *
+     * @param command Parsed command type (never null).
+     * @param index   0-based index for index-based commands, or -1 if not applicable.
+     * @param task    Parsed task for add commands, or null if not applicable.
+     */
     public record ParsedCommand(Command command, int index, Task task) {
     }
 
+    /**
+     * Parses raw user input into a {@link ParsedCommand}.
+     *
+     * <p>Examples:
+     * <ul>
+     *   <li>{@code list}</li>
+     *   <li>{@code mark 2}</li>
+     *   <li>{@code todo borrow book}</li>
+     *   <li>{@code deadline return book /by 2026-01-30}</li>
+     *   <li>{@code event meeting /from 2026-01-30 1800 /to 2026-01-30 2000}</li>
+     * </ul>
+     *
+     * @param input User input line.
+     * @return Parsed command object.
+     * @throws IllegalArgumentException If the input is empty, malformed, or unknown.
+     */
     public static ParsedCommand parse(String input) {
         if (input == null) {
             throw new IllegalArgumentException("Input is null");
@@ -40,16 +93,26 @@ public class Parser {
         return switch (firstToken) {
             case "list" -> new ParsedCommand(Command.LIST, -1, null);
             case "bye" -> new ParsedCommand(Command.BYE, -1, null);
+
             case "mark" -> new ParsedCommand(Command.MARK, parseIndex(trimmed), null);
             case "unmark" -> new ParsedCommand(Command.UNMARK, parseIndex(trimmed), null);
             case "delete" -> new ParsedCommand(Command.DELETE, parseIndex(trimmed), null);
+
             case "todo" -> new ParsedCommand(Command.TODO, -1, parseTodo(trimmed));
             case "deadline" -> new ParsedCommand(Command.DEADLINE, -1, parseDeadline(trimmed));
             case "event" -> new ParsedCommand(Command.EVENT, -1, parseEvent(trimmed));
+
             default -> throw new IllegalArgumentException("Unknown command");
         };
     }
 
+    /**
+     * Parses a 1-based index from commands such as {@code "mark 2"} and returns it as 0-based.
+     *
+     * @param input Full user input line.
+     * @return 0-based index (>= 0).
+     * @throws IllegalArgumentException If index is missing, not a number, or <= 0.
+     */
     private static int parseIndex(String input) {
         try {
             String[] parts = input.split("\\s+");
@@ -68,14 +131,33 @@ public class Parser {
         }
     }
 
+    /**
+     * Parses a {@code todo} command.
+     *
+     * <p>Format: {@code todo <description>}
+     *
+     * @param input Full user input line.
+     * @return A {@link Todo} task.
+     * @throws IllegalArgumentException If description is missing/blank.
+     */
     private static Task parseTodo(String input) {
         String[] parts = input.split("todo\\s+", 2);
         if (parts.length < 2 || parts[1].trim().isEmpty()) {
             throw new IllegalArgumentException("Todo description missing");
         }
+
         return new Todo(parts[1].trim());
     }
 
+    /**
+     * Parses a {@code deadline} command.
+     *
+     * <p>Format: {@code deadline <description> /by <yyyy-MM-dd>}
+     *
+     * @param input Full user input line.
+     * @return A {@link Deadline} task.
+     * @throws IllegalArgumentException If format is invalid or date cannot be parsed.
+     */
     private static Task parseDeadline(String input) {
         String[] parts = input.split("deadline\\s+", 2);
         if (parts.length < 2) {
@@ -102,6 +184,19 @@ public class Parser {
         }
     }
 
+    /**
+     * Parses an {@code event} command.
+     *
+     * <p>Format:
+     * {@code event <description> /from <yyyy-MM-dd HHmm> /to <yyyy-MM-dd HHmm>}
+     *
+     * <p>Validation rule: {@code /to} must be strictly after {@code /from}.
+     *
+     * @param input Full user input line.
+     * @return An {@link Event} task.
+     * @throws IllegalArgumentException If format is invalid, date cannot be parsed,
+     *                                  or {@code /to} is not after {@code /from}.
+     */
     private static Task parseEvent(String input) {
         String[] parts = input.split("event\\s+", 2);
         if (parts.length < 2) {

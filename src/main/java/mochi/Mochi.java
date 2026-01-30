@@ -4,24 +4,42 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
-import mochi.storage.Storage;
-
-import mochi.task.Task;
-import mochi.task.TaskList;
-
 import mochi.parser.Parser;
 import mochi.parser.Parser.ParsedCommand;
+import mochi.storage.Storage;
+import mochi.task.Task;
+import mochi.task.TaskList;
 
 /**
  * Main entry point for the Mochi CLI chatbot.
  *
- * <p>Mochi manages a list of tasks (to-dos, deadlines, and events) and supports
- * automatic loading from and saving to a local file on disk.
+ * <p>Mochi runs a read-eval-print loop (REPL) that:
+ * <ul>
+ *   <li>reads user input from stdin</li>
+ *   <li>parses it into a structured command via {@link Parser}</li>
+ *   <li>applies changes to the {@link TaskList}</li>
+ *   <li>saves changes to disk via {@link Storage}</li>
+ * </ul>
+ *
+ * <p>Responsibilities:
+ * <ul>
+ *   <li>UI: printing messages and reading input</li>
+ *   <li>Workflow orchestration: parse → execute → save</li>
+ * </ul>
+ *
+ * @author Kacey Isaiah Yonathan
  */
 public class Mochi {
+
+    /** Directory name for persistence data (relative to project root). */
     private static final String DATA_DIR_NAME = "data";
+
+    /** Save file name used by {@link Storage}. */
     private static final String SAVE_FILE_NAME = "tasks.txt";
-    private static final String SEPARATOR = "____________________________________________________________";
+
+    /** Horizontal separator line used in CLI output. */
+    private static final String SEPARATOR =
+            "____________________________________________________________";
 
     /**
      * Runs the chatbot in a read-eval-print loop.
@@ -31,17 +49,12 @@ public class Mochi {
      */
     public static void main(String[] args) throws IOException {
         BufferedReader consoleReader = new BufferedReader(new InputStreamReader(System.in));
-
         Storage storage = new Storage(DATA_DIR_NAME, SAVE_FILE_NAME);
 
         printWelcome();
 
         TaskList taskList = storage.load();
-        if (taskList.size() == 0) {
-            System.out.println("No tasks loaded from disk.");
-        } else {
-            System.out.println("Loaded " + taskList.size() + " task(s) from disk.");
-        }
+        printLoadStatus(taskList);
 
         printHelp();
 
@@ -69,11 +82,7 @@ public class Mochi {
 
             boolean hasChanged = handleCommand(parsed, taskList);
             if (hasChanged) {
-                try {
-                    storage.save(taskList);
-                } catch (IOException e) {
-                    System.out.println("Error saving tasks: " + e.getMessage());
-                }
+                saveOrWarn(storage, taskList);
             }
 
             printSeparator();
@@ -82,13 +91,48 @@ public class Mochi {
         printGoodbye();
     }
 
+    /**
+     * Prints a simple load status message after reading tasks from disk.
+     *
+     * @param taskList Loaded task list.
+     */
+    private static void printLoadStatus(TaskList taskList) {
+        if (taskList.isEmpty()) {
+            System.out.println("No tasks loaded from disk.");
+            return;
+        }
 
+        System.out.println("Loaded " + taskList.size() + " task(s) from disk.");
+    }
+
+    /**
+     * Saves tasks to disk and prints a warning if saving fails.
+     *
+     * @param storage Storage handler used for persistence.
+     * @param taskList Current task list to save.
+     */
+    private static void saveOrWarn(Storage storage, TaskList taskList) {
+        try {
+            storage.save(taskList);
+        } catch (IOException e) {
+            System.out.println("Error saving tasks: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Executes a parsed command against the given task list.
+     *
+     * @param parsed Parsed command from {@link Parser}.
+     * @param tasks  Current in-memory task list.
+     * @return {@code true} if the task list changed and should be saved.
+     */
     private static boolean handleCommand(ParsedCommand parsed, TaskList tasks) {
         return switch (parsed.command()) {
             case LIST -> {
                 printTasks(tasks);
                 yield false;
             }
+
             case MARK -> markTask(tasks, parsed.index(), true);
             case UNMARK -> markTask(tasks, parsed.index(), false);
             case DELETE -> deleteTask(tasks, parsed.index());
@@ -121,6 +165,14 @@ public class Mochi {
         }
     }
 
+    /**
+     * Marks or unmarks the task at the given 0-based index.
+     *
+     * @param tasks      Task list.
+     * @param index      0-based index of the task.
+     * @param shouldMark True to mark as done, false to unmark.
+     * @return {@code true} if successful, {@code false} if index invalid.
+     */
     private static boolean markTask(TaskList tasks, int index, boolean shouldMark) {
         try {
             Task task = tasks.get(index);
@@ -132,6 +184,7 @@ public class Mochi {
                 task.unmark();
                 System.out.println("Marked as not done: " + task);
             }
+
             return true;
         } catch (IndexOutOfBoundsException e) {
             printError();
@@ -139,6 +192,13 @@ public class Mochi {
         }
     }
 
+    /**
+     * Deletes the task at the given 0-based index.
+     *
+     * @param tasks Task list.
+     * @param index 0-based index of the task.
+     * @return {@code true} if deleted, {@code false} if index invalid.
+     */
     private static boolean deleteTask(TaskList tasks, int index) {
         try {
             Task removed = tasks.remove(index);
@@ -216,7 +276,7 @@ public class Mochi {
      */
     private static void printGoodbye() {
         printSeparator();
-        System.out.println("Bye-bye, Please come back soon দ্দി(˵ •̀ ᴗ - ˵ ) ✧!!!");
+        System.out.println("Bye-bye, Please come back soon ദ্দി(˵ •̀ ᴗ - ˵ ) ✧!!!");
         printSeparator();
     }
 
