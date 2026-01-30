@@ -76,7 +76,7 @@ public class Mochi {
      * @throws IOException If an I/O error occurs while reading user input.
      */
     public static void main(String[] args) throws IOException {
-        BufferedReader consoleReader = new BufferedReader(new InputStreamReader(System.in));
+        BufferedReader consoleReader = new BufferedReader(new InputStreamReader(System.in)); //ChatGPT suggest to use consoleReader name
 
         printWelcome();
         ArrayList<Task> taskList = loadTasks();
