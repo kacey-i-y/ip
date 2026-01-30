@@ -12,10 +12,15 @@ import mochi.task.TaskList;
 import mochi.ui.Ui;
 
 /**
- * Main entry point for the Mochi CLI chatbot.
+ * Main application class for the Mochi CLI chatbot.
  *
- * <p>Mochi orchestrates the chatbot workflow:
- * parse → execute → save, while delegating UI printing/reading to {@link Ui}.
+ * <p>Mochi wires together:
+ * <ul>
+ *   <li>{@link Ui} for user interaction</li>
+ *   <li>{@link Parser} for interpreting commands</li>
+ *   <li>{@link TaskList} for task operations</li>
+ *   <li>{@link Storage} for persistence</li>
+ * </ul>
  *
  * @author Kacey Isaiah Yonathan
  */
@@ -27,26 +32,50 @@ public class Mochi {
     /** Save file name used by {@link Storage}. */
     private static final String SAVE_FILE_NAME = "tasks.txt";
 
+    private final Ui ui;
+    private final Storage storage;
+    private final TaskList tasks;
+
     /**
-     * Runs the chatbot in a read-eval-print loop.
+     * Creates a Mochi instance and loads tasks from disk.
      *
-     * @param args Command line arguments (unused).
-     * @throws IOException If an I/O error occurs while reading user input.
+     * <p>If loading fails, Mochi starts with an empty task list.
      */
-    public static void main(String[] args) throws IOException {
+    public Mochi() {
         BufferedReader consoleReader = new BufferedReader(new InputStreamReader(System.in));
-        Ui ui = new Ui(consoleReader);
-        Storage storage = new Storage(DATA_DIR_NAME, SAVE_FILE_NAME);
+        this.ui = new Ui(consoleReader);
+        this.storage = new Storage(DATA_DIR_NAME, SAVE_FILE_NAME);
 
         ui.showWelcome();
 
-        TaskList taskList = storage.load();
-        ui.showLoadStatus(taskList);
+        TaskList loaded;
+        try {
+            loaded = storage.load();
+        } catch (Exception e) {
+            // In case your Storage.load() never throws, this still keeps Mochi robust.
+            loaded = new TaskList();
+        }
 
+        this.tasks = loaded;
+        ui.showLoadStatus(tasks);
         ui.showHelp();
+    }
 
+    /**
+     * Runs the chatbot in a read-eval-print loop (REPL).
+     */
+    public void run() {
         while (true) {
-            String userInput = ui.readCommand();
+            String userInput;
+            try {
+                userInput = ui.readCommand();
+            } catch (IOException e) {
+                ui.showSeparator();
+                ui.showError();
+                ui.showSeparator();
+                break;
+            }
+
             if (userInput == null) {
                 break;
             }
@@ -67,9 +96,9 @@ public class Mochi {
 
             ui.showSeparator();
 
-            boolean hasChanged = handleCommand(parsed, taskList, ui);
+            boolean hasChanged = handleCommand(parsed);
             if (hasChanged) {
-                saveOrWarn(storage, taskList, ui);
+                saveOrWarn();
             }
 
             ui.showSeparator();
@@ -79,38 +108,32 @@ public class Mochi {
     }
 
     /**
-     * Saves tasks to disk and prints a warning if saving fails.
-     *
-     * @param storage Storage handler used for persistence.
-     * @param taskList Current task list to save.
-     * @param ui UI handler for output.
+     * Saves tasks to disk and warns if saving fails.
      */
-    private static void saveOrWarn(Storage storage, TaskList taskList, Ui ui) {
+    private void saveOrWarn() {
         try {
-            storage.save(taskList);
+            storage.save(tasks);
         } catch (IOException e) {
             ui.showSaveError(e.getMessage());
         }
     }
 
     /**
-     * Executes a parsed command against the given task list.
+     * Executes a parsed command against the current task list.
      *
      * @param parsed Parsed command from {@link Parser}.
-     * @param tasks Current in-memory task list.
-     * @param ui UI handler for output.
      * @return {@code true} if the task list changed and should be saved.
      */
-    private static boolean handleCommand(ParsedCommand parsed, TaskList tasks, Ui ui) {
+    private boolean handleCommand(ParsedCommand parsed) {
         return switch (parsed.command()) {
             case LIST -> {
                 ui.showTaskList(tasks);
                 yield false;
             }
 
-            case MARK -> markTask(tasks, parsed.index(), true, ui);
-            case UNMARK -> markTask(tasks, parsed.index(), false, ui);
-            case DELETE -> deleteTask(tasks, parsed.index(), ui);
+            case MARK -> markTask(parsed.index(), true);
+            case UNMARK -> markTask(parsed.index(), false);
+            case DELETE -> deleteTask(parsed.index());
 
             case TODO, DEADLINE, EVENT -> {
                 tasks.add(parsed.task());
@@ -118,20 +141,18 @@ public class Mochi {
                 yield true;
             }
 
-            case BYE -> false; // already handled in main loop
+            case BYE -> false; // handled in run()
         };
     }
 
     /**
-     * Marks or unmarks the task at the given 0-based index.
+     * Marks or unmarks a task.
      *
-     * @param tasks Task list.
-     * @param index 0-based index of the task.
-     * @param shouldMark True to mark as done, false to unmark.
-     * @param ui UI handler for output.
-     * @return {@code true} if successful, {@code false} if index invalid.
+     * @param index 0-based index.
+     * @param shouldMark True to mark done, false to unmark.
+     * @return {@code true} if successful.
      */
-    private static boolean markTask(TaskList tasks, int index, boolean shouldMark, Ui ui) {
+    private boolean markTask(int index, boolean shouldMark) {
         try {
             Task task = tasks.get(index);
 
@@ -150,14 +171,12 @@ public class Mochi {
     }
 
     /**
-     * Deletes the task at the given 0-based index.
+     * Deletes a task.
      *
-     * @param tasks Task list.
-     * @param index 0-based index of the task.
-     * @param ui UI handler for output.
-     * @return {@code true} if deleted, {@code false} if index invalid.
+     * @param index 0-based index.
+     * @return {@code true} if successful.
      */
-    private static boolean deleteTask(TaskList tasks, int index, Ui ui) {
+    private boolean deleteTask(int index) {
         try {
             Task removed = tasks.remove(index);
             ui.showTaskRemoved(removed, tasks.size());
@@ -166,5 +185,14 @@ public class Mochi {
             ui.showError();
             return false;
         }
+    }
+
+    /**
+     * Program entry point.
+     *
+     * @param args Command line arguments (unused).
+     */
+    public static void main(String[] args) {
+        new Mochi().run();
     }
 }
