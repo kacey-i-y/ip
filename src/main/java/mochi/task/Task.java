@@ -87,4 +87,18 @@ public abstract class Task {
     public String toWrite() {
         return (isDone ? "1" : "0") + " | " + description;
     }
+
+    /**
+     * Returns whether this task matches the given keyword (case-insensitive).
+     *
+     * @param keyword Keyword to search for.
+     * @return True if the description contains the keyword.
+     */
+    public boolean matchesKeyword(String keyword) {
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return false;
+        }
+
+        return this.description.toLowerCase().contains(keyword.trim().toLowerCase());
+    }
 }

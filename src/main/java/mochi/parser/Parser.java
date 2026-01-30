@@ -19,6 +19,7 @@ import mochi.task.Todo;
  *   <li>a {@link Command} type</li>
  *   <li>an optional 0-based index for commands like mark/unmark/delete</li>
  *   <li>an optional {@link Task} object for commands that create tasks</li>
+ *   <li>an optional keyword for {@code find} commands</li>
  * </ul>
  *
  * <p>Design note: This is a utility class (no instances). All parsing logic is centralized
@@ -43,7 +44,7 @@ public class Parser {
      * Supported user commands recognized by the parser.
      */
     public enum Command {
-        LIST, MARK, UNMARK, TODO, DEADLINE, EVENT, DELETE, BYE
+        LIST, MARK, UNMARK, TODO, DEADLINE, EVENT, DELETE, FIND, BYE
     }
 
     /**
@@ -53,13 +54,15 @@ public class Parser {
      * <ul>
      *   <li>{@code index} is 0-based when used; otherwise {@code -1}</li>
      *   <li>{@code task} is non-null only for TODO/DEADLINE/EVENT; otherwise {@code null}</li>
+     *   <li>{@code keyword} is non-null only for FIND; otherwise {@code null}</li>
      * </ul>
      *
      * @param command Parsed command type (never null).
      * @param index   0-based index for index-based commands, or -1 if not applicable.
      * @param task    Parsed task for add commands, or null if not applicable.
+     * @param keyword Keyword for find command, or null if not applicable.
      */
-    public record ParsedCommand(Command command, int index, Task task) {
+    public record ParsedCommand(Command command, int index, Task task, String keyword) {
     }
 
     /**
@@ -72,6 +75,7 @@ public class Parser {
      *   <li>{@code todo borrow book}</li>
      *   <li>{@code deadline return book /by 2026-01-30}</li>
      *   <li>{@code event meeting /from 2026-01-30 1800 /to 2026-01-30 2000}</li>
+     *   <li>{@code find book}</li>
      * </ul>
      *
      * @param input User input line.
@@ -91,16 +95,18 @@ public class Parser {
         String firstToken = trimmed.split("\\s+")[0].toLowerCase();
 
         return switch (firstToken) {
-            case "list" -> new ParsedCommand(Command.LIST, -1, null);
-            case "bye" -> new ParsedCommand(Command.BYE, -1, null);
+            case "list" -> new ParsedCommand(Command.LIST, -1, null, null);
+            case "bye" -> new ParsedCommand(Command.BYE, -1, null, null);
 
-            case "mark" -> new ParsedCommand(Command.MARK, parseIndex(trimmed), null);
-            case "unmark" -> new ParsedCommand(Command.UNMARK, parseIndex(trimmed), null);
-            case "delete" -> new ParsedCommand(Command.DELETE, parseIndex(trimmed), null);
+            case "mark" -> new ParsedCommand(Command.MARK, parseIndex(trimmed), null, null);
+            case "unmark" -> new ParsedCommand(Command.UNMARK, parseIndex(trimmed), null, null);
+            case "delete" -> new ParsedCommand(Command.DELETE, parseIndex(trimmed), null, null);
 
-            case "todo" -> new ParsedCommand(Command.TODO, -1, parseTodo(trimmed));
-            case "deadline" -> new ParsedCommand(Command.DEADLINE, -1, parseDeadline(trimmed));
-            case "event" -> new ParsedCommand(Command.EVENT, -1, parseEvent(trimmed));
+            case "todo" -> new ParsedCommand(Command.TODO, -1, parseTodo(trimmed), null);
+            case "deadline" -> new ParsedCommand(Command.DEADLINE, -1, parseDeadline(trimmed), null);
+            case "event" -> new ParsedCommand(Command.EVENT, -1, parseEvent(trimmed), null);
+
+            case "find" -> new ParsedCommand(Command.FIND, -1, null, parseFindKeyword(trimmed));
 
             default -> throw new IllegalArgumentException("Unknown command");
         };
@@ -129,6 +135,23 @@ public class Parser {
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException("Index must be a number", e);
         }
+    }
+
+    /**
+     * Parses a {@code find} command keyword.
+     *
+     * <p>Format: {@code find <keyword>}
+     *
+     * @param input Full user input line.
+     * @return Keyword string.
+     * @throws IllegalArgumentException If keyword is missing/blank.
+     */
+    private static String parseFindKeyword(String input) {
+        String[] parts = input.split("find\\s+", 2);
+        if (parts.length < 2 || parts[1].trim().isEmpty()) {
+            throw new IllegalArgumentException("Find keyword missing");
+        }
+        return parts[1].trim();
     }
 
     /**
