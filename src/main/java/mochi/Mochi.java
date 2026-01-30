@@ -1,22 +1,21 @@
 package mochi;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
+
+import mochi.storage.Storage;
 
 import mochi.task.Deadline;
 import mochi.task.Event;
 import mochi.task.Task;
 import mochi.task.Todo;
+import mochi.task.TaskList;
 
 /**
  * Main entry point for the Mochi CLI chatbot.
@@ -76,10 +75,19 @@ public class Mochi {
      * @throws IOException If an I/O error occurs while reading user input.
      */
     public static void main(String[] args) throws IOException {
-        BufferedReader consoleReader = new BufferedReader(new InputStreamReader(System.in)); //ChatGPT suggest to use consoleReader name
+        BufferedReader consoleReader = new BufferedReader(new InputStreamReader(System.in));
+
+        Storage storage = new Storage(DATA_DIR_NAME, SAVE_FILE_NAME);
 
         printWelcome();
-        ArrayList<Task> taskList = loadTasks();
+
+        TaskList taskList = storage.load();
+        if (taskList.size() == 0) {
+            System.out.println("No tasks loaded from disk.");
+        } else {
+            System.out.println("Loaded " + taskList.size() + " task(s) from disk.");
+        }
+
         printHelp();
 
         while (true) {
@@ -94,10 +102,14 @@ public class Mochi {
             }
 
             printSeparator();
-            boolean hasChanged = handleCommand(command, userInput, taskList);
 
+            boolean hasChanged = handleCommand(command, userInput, taskList);
             if (hasChanged) {
-                saveTasks(taskList);
+                try {
+                    storage.save(taskList);
+                } catch (IOException e) {
+                    System.out.println("Error saving tasks: " + e.getMessage());
+                }
             }
 
             printSeparator();
@@ -114,7 +126,7 @@ public class Mochi {
      * @param tasks Current in-memory task list.
      * @return {@code true} if the task list was modified, {@code false} otherwise.
      */
-    private static boolean handleCommand(Command command, String input, ArrayList<Task> tasks) {
+    private static boolean handleCommand(Command command, String input, TaskList tasks) {
         return switch (command) {
             case LIST -> {
                 printTasks(tasks);
@@ -134,147 +146,11 @@ public class Mochi {
     }
 
     /**
-     * Loads tasks from disk if the save file exists.
-     *
-     * @return List of tasks loaded from disk, or an empty list if file is missing/corrupted.
-     */
-    private static ArrayList<Task> loadTasks() {
-        ArrayList<Task> tasks = new ArrayList<>();
-        File file = getSaveFile();
-
-        if (!file.exists()) {
-            System.out.println("Save file not found. Starting with an empty task list.");
-            return tasks;
-        }
-
-        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                try {
-                    tasks.add(parseTaskLine(line));
-                } catch (IllegalArgumentException e) {
-                    System.out.println("Skipping corrupted save line: " + line);
-                }
-            }
-        } catch (IOException e) {
-            System.out.println("Error reading save file: " + e.getMessage());
-            System.out.println("Starting with an empty task list.");
-            tasks.clear();
-        }
-
-        System.out.println(tasks.isEmpty()
-                ? "No tasks loaded from disk."
-                : "Loaded " + tasks.size() + " task(s) from disk.");
-
-        return tasks;
-    }
-
-    /**
-     * Saves all tasks to disk by rewriting the full save file.
-     *
-     * @param tasks Task list to save.
-     */
-    private static void saveTasks(ArrayList<Task> tasks) {
-        File file = getSaveFile();
-        File dataDir = file.getParentFile();
-
-        if (dataDir != null && !dataDir.exists() && !dataDir.mkdirs()) {
-            System.out.println("Failed to create data directory: " + dataDir.getPath());
-            return;
-        }
-
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
-            for (Task task : tasks) {
-                writer.write(task.toWrite());
-                writer.newLine();
-            }
-        } catch (IOException e) {
-            System.out.println("Error saving tasks: " + e.getMessage());
-        }
-    }
-
-    /**
-     * Parses one save-file line into a {@link Task}.
-     *
-     * <p>Expected formats:
-     * <ul>
-     *   <li>{@code T | 1 | description}</li>
-     *   <li>{@code D | 0 | description | yyyy-MM-dd}</li>
-     *   <li>{@code E | 0 | description | yyyy-MM-dd HHmm | yyyy-MM-dd HHmm}</li>
-     * </ul>
-     *
-     * @param line One line from the save file.
-     * @return Parsed task.
-     * @throws IllegalArgumentException If the line is malformed.
-     */
-    private static Task parseTaskLine(String line) {
-        String[] parts = line.split(PIPE_SPLIT_REGEX);
-        if (parts.length < 3) {
-            throw new IllegalArgumentException("Too few fields");
-        }
-
-        String type = parts[0].trim().toUpperCase();
-        String doneField = parts[1].trim();
-
-        Task task;
-        try {
-            task = switch (type) {
-                case "T" -> new Todo(parts[2].trim());
-                case "D" -> {
-                    if (parts.length < 4) {
-                        throw new IllegalArgumentException("Deadline missing by");
-                    }
-                    LocalDate byDate = LocalDate.parse(parts[3].trim());
-                    yield new Deadline(parts[2].trim(), byDate);
-                }
-                case "E" -> {
-                    if (parts.length < 5) {
-                        throw new IllegalArgumentException("Event missing from/to");
-                    }
-
-                    LocalDateTime fromDateTime =
-                            LocalDateTime.parse(parts[3].trim(), EVENT_INPUT_FORMAT);
-                    LocalDateTime toDateTime =
-                            LocalDateTime.parse(parts[4].trim(), EVENT_INPUT_FORMAT);
-
-                    if (!toDateTime.isAfter(fromDateTime)) {
-                        throw new IllegalArgumentException("Event end must be after start");
-                    }
-
-                    yield new Event(parts[2].trim(), fromDateTime, toDateTime);
-                }
-                default -> throw new IllegalArgumentException("Unknown task type: " + type);
-            };
-        } catch (DateTimeParseException e) {
-            throw new IllegalArgumentException("Bad date/time format", e);
-        }
-
-        if ("1".equals(doneField)) {
-            task.mark();
-        } else if ("0".equals(doneField)) {
-            task.unmark();
-        } else {
-            throw new IllegalArgumentException("Bad done field: " + doneField);
-        }
-
-        return task;
-    }
-
-    /**
-     * Returns the save file location as a relative, OS-independent path.
-     *
-     * @return Save file at {@code ./data/tasks.txt}.
-     */
-    private static File getSaveFile() {
-        return new File(DATA_DIR_NAME, SAVE_FILE_NAME);
-    }
-
-    /**
      * Prints all tasks with 1-based indexing.
      *
      * @param tasks Task list to print.
      */
-    private static void printTasks(ArrayList<Task> tasks) {
+    private static void printTasks(TaskList tasks) {
         if (tasks.isEmpty()) {
             System.out.println("Your task list is empty.");
             return;
@@ -286,7 +162,7 @@ public class Mochi {
         }
     }
 
-    private static boolean markTask(ArrayList<Task> tasks, String input, boolean shouldMark) {
+    private static boolean markTask(TaskList tasks, String input, boolean shouldMark) {
         try {
             int index = Integer.parseInt(input.split("\\s+")[1]) - 1;
             Task task = tasks.get(index);
@@ -305,7 +181,7 @@ public class Mochi {
         }
     }
 
-    private static boolean deleteTask(ArrayList<Task> tasks, String input) {
+    private static boolean deleteTask(TaskList tasks, String input) {
         try {
             int index = Integer.parseInt(input.split("\\s+")[1]) - 1;
             Task removed = tasks.remove(index);
@@ -319,7 +195,7 @@ public class Mochi {
         }
     }
 
-    private static boolean addTodo(ArrayList<Task> tasks, String input) {
+    private static boolean addTodo(TaskList tasks, String input) {
         try {
             String description = input.split("todo\\s+", 2)[1].trim();
             if (description.isEmpty()) {
@@ -339,7 +215,7 @@ public class Mochi {
         }
     }
 
-    private static boolean addDeadline(ArrayList<Task> tasks, String input) {
+    private static boolean addDeadline(TaskList tasks, String input) {
         try {
             String body = input.split("deadline\\s+", 2)[1];
             String[] parts = body.split("\\s*/by\\s*", 2);
@@ -365,7 +241,7 @@ public class Mochi {
         }
     }
 
-    private static boolean addEvent(ArrayList<Task> tasks, String input) {
+    private static boolean addEvent(TaskList tasks, String input) {
         try {
             String body = input.split("event\\s+", 2)[1];
             String[] first = body.split("\\s*/from\\s*", 2);

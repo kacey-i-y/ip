@@ -81,4 +81,13 @@ public class TaskList {
     public ArrayList<Task> asList() {
         return this.tasks;
     }
+
+    /**
+     * Returns the boolean for whether the lisk is empty or not
+     *
+     * @return boolean of true or false
+     */
+    public boolean isEmpty() {
+        return this.tasks.isEmpty();
+    }
 }
