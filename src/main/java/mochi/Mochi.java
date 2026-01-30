@@ -11,6 +11,8 @@ import mochi.task.Task;
 import mochi.task.TaskList;
 import mochi.ui.Ui;
 
+//Code has been made to follow the proper Coding Standard
+
 /**
  * Main application class for the Mochi CLI chatbot.
  *
