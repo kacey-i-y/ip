@@ -28,7 +28,7 @@ public class Mochi {
     private static final DateTimeFormatter EVENT_INPUT_FORMAT =
             DateTimeFormatter.ofPattern("yyyy-MM-dd HHmm");
     private static final String DATA_DIR_NAME = "data";
-    private static final String SAVqE_FILE_NAME = "tasks.txt";
+    private static final String SAVE_FILE_NAME = "tasks.txt";
     private static final String SEPARATOR = "____________________________________________________________";
     private static final String PIPE_SPLIT_REGEX = "\\s*\\|\\s*";
 
@@ -252,22 +252,35 @@ public class Mochi {
         String type = parts[0].trim().toUpperCase();
         String doneField = parts[1].trim();
 
-        Task task = switch (type) {
-            case "T" -> new Todo(parts[2]);
-            case "D" -> {
-                if (parts.length < 4) {
-                    throw new IllegalArgumentException("Deadline missing by");
+        Task task;
+        try {
+            task = switch (type) {
+                case "T" -> new Todo(parts[2].trim());
+                case "D" -> {
+                    if (parts.length < 4) {
+                        throw new IllegalArgumentException("Deadline missing by");
+                    }
+                    LocalDate byDate = LocalDate.parse(parts[3].trim()); // yyyy-MM-dd
+                    yield new Deadline(parts[2].trim(), byDate);
                 }
-                yield new Deadline(parts[2], parts[3]);
-            }
-            case "E" -> {
-                if (parts.length < 5) {
-                    throw new IllegalArgumentException("Event missing from/to");
+                case "E" -> {
+                    if (parts.length < 5) {
+                        throw new IllegalArgumentException("Event missing from/to");
+                    }
+                    LocalDateTime fromDt = LocalDateTime.parse(parts[3].trim(), EVENT_INPUT_FORMAT);
+                    LocalDateTime toDt = LocalDateTime.parse(parts[4].trim(), EVENT_INPUT_FORMAT);
+
+                    if (!toDt.isAfter(fromDt)) {
+                        throw new IllegalArgumentException("Event end must be after start");
+                    }
+
+                    yield new Event(parts[2].trim(), fromDt, toDt);
                 }
-                yield new Event(parts[2], parts[3], parts[4]);
-            }
-            default -> throw new IllegalArgumentException("Unknown task type: " + type);
-        };
+                default -> throw new IllegalArgumentException("Unknown task type: " + type);
+            };
+        } catch (DateTimeParseException e) {
+            throw new IllegalArgumentException("Bad date/time format", e);
+        }
 
         if ("1".equals(doneField)) {
             task.mark();
@@ -359,19 +372,21 @@ public class Mochi {
             String[] parts = body.split("\\s*/by\\s*", 2);
 
             String desc = parts[0].trim();
-            String by = parts[1].trim();
+            String byRaw = parts[1].trim();
 
-            if (desc.isEmpty() || by.isEmpty()) {
+            if (desc.isEmpty() || byRaw.isEmpty()) {
                 printError();
                 return false;
             }
 
-            Task task = new Deadline(desc, by);
+            LocalDate byDate = LocalDate.parse(byRaw); // expects yyyy-MM-dd
+            Task task = new Deadline(desc, byDate);
+
             tasks.add(task);
             System.out.println("Added: " + task);
             System.out.println("Currently, we have " + tasks.size() + " task(s) on the list.");
             return true;
-        } catch (RuntimeException e) {
+        } catch (ArrayIndexOutOfBoundsException | DateTimeParseException e) {
             printError();
             return false;
         }
@@ -384,20 +399,28 @@ public class Mochi {
             String[] second = first[1].split("\\s*/to\\s*", 2);
 
             String desc = first[0].trim();
-            String from = second[0].trim();
-            String to = second[1].trim();
+            String fromRaw = second[0].trim();
+            String toRaw = second[1].trim();
 
-            if (desc.isEmpty() || from.isEmpty() || to.isEmpty()) {
+            if (desc.isEmpty() || fromRaw.isEmpty() || toRaw.isEmpty()) {
                 printError();
                 return false;
             }
 
-            Task task = new Event(desc, from, to);
+            LocalDateTime fromDt = LocalDateTime.parse(fromRaw, EVENT_INPUT_FORMAT);
+            LocalDateTime toDt = LocalDateTime.parse(toRaw, EVENT_INPUT_FORMAT);
+
+            if (!toDt.isAfter(fromDt)) {
+                System.out.println("Error: /to must be after /from.");
+                return false;
+            }
+
+            Task task = new Event(desc, fromDt, toDt);
             tasks.add(task);
             System.out.println("Added: " + task);
             System.out.println("Currently, we have " + tasks.size() + " task(s) on the list.");
             return true;
-        } catch (RuntimeException e) {
+        } catch (ArrayIndexOutOfBoundsException | DateTimeParseException e) {
             printError();
             return false;
         }
@@ -431,8 +454,8 @@ public class Mochi {
     private static void printHelp() {
         System.out.println("Please follow the following formats:");
         System.out.println("todo <task>");
-        System.out.println("deadline <task> /by <deadline>");
-        System.out.println("event <task> /from <from> /to <to>");
+        System.out.println("deadline <task> /by yyyy-MM-dd");
+        System.out.println("event <task> /from yyyy-MM-dd HHmm /to yyyy-MM-dd HHmm");
         System.out.println("mark <number>");
         System.out.println("unmark <number>");
         System.out.println("delete <number>");
@@ -444,8 +467,8 @@ public class Mochi {
     private static void printError() {
         System.out.println("Error, please follow the specified formats:");
         System.out.println("todo <task>");
-        System.out.println("deadline <task> /by <deadline>");
-        System.out.println("event <task> /from <from> /to <to>");
+        System.out.println("deadline <task> /by yyyy-MM-dd");
+        System.out.println("event <task> /from yyyy-MM-dd HHmm /to yyyy-MM-dd HHmm");
         System.out.println("mark <number>");
         System.out.println("unmark <number>");
         System.out.println("delete <number>");
