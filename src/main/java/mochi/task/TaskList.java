@@ -123,4 +123,22 @@ public class TaskList {
     public ArrayList<Task> asList() {
         return this.tasks;
     }
+
+    /**
+     * Finds and returns tasks whose descriptions contain the given keyword.
+     *
+     * @param keyword Keyword to search for (case-insensitive).
+     * @return A TaskList containing all matching tasks.
+     */
+    public TaskList find(String keyword) {
+        TaskList matches = new TaskList();
+
+        for (Task task : this.tasks) {
+            if (task.matchesKeyword(keyword)) {
+                matches.add(task);
+            }
+        }
+
+        return matches;
+    }
 }

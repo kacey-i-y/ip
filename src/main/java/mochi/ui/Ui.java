@@ -195,4 +195,21 @@ public class Ui {
     public void showSeparator() {
         System.out.println(SEPARATOR);
     }
+
+    /**
+     * Prints tasks that match a keyword search.
+     *
+     * @param matches The list of matching tasks.
+     */
+    public void showFindResults(TaskList matches) {
+        if (matches.isEmpty()) {
+            System.out.println("No matching tasks found.");
+            return;
+        }
+
+        System.out.println("Here are the matching tasks in your list:");
+        for (int i = 0; i < matches.size(); i++) {
+            System.out.println((i + 1) + ". " + matches.get(i));
+        }
+    }
 }

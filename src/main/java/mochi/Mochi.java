@@ -142,6 +142,12 @@ public class Mochi {
             }
 
             case BYE -> false; // handled in run()
+
+            case FIND -> {
+                TaskList matches = tasks.find(parsed.keyword());
+                ui.showFindResults(matches);
+                yield false;
+            }
         };
     }
 
