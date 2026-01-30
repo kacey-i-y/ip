@@ -1,36 +1,48 @@
 package mochi.task;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+
 /**
- * Represents a task that has to be completed by a specific deadline.
+ * Represents a task that must be completed by a specific deadline date.
  */
 public class Deadline extends Task {
 
-    /** The deadline for the task. */
-    protected String by;
+    /**
+     * Output format used when displaying the deadline date to the user.
+     */
+    private static final DateTimeFormatter OUTPUT_FORMAT =
+            DateTimeFormatter.ofPattern("MMM d yyyy");
 
     /**
-     * Creates a deadline task.
+     * The deadline date for this task.
+     */
+    protected LocalDate by;
+
+    /**
+     * Constructs a {@code Deadline} task with the given description and deadline date.
      *
      * @param description The task description.
-     * @param by The deadline (e.g. date/time).
+     * @param by The deadline date.
      */
-    public Deadline(String description, String by) {
+    public Deadline(String description, LocalDate by) {
         super(description);
         this.by = by;
     }
 
     /**
-     * Returns the UI representation of this deadline task.
+     * Returns the user-facing string representation of this deadline task.
      *
      * @return A formatted string for display.
      */
     @Override
     public String toString() {
-        return "[D] " + super.toString() + " (by: " + this.by + ")";
+        return "[D] " + super.toString() + " (by: " + this.by.format(OUTPUT_FORMAT) + ")";
     }
 
     /**
      * Returns the save-file representation of this deadline task.
+     * The deadline date is stored in ISO-8601 format (yyyy-MM-dd).
      *
      * @return A formatted string for storage.
      */
