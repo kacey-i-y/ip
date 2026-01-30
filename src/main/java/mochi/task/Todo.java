@@ -1,14 +1,20 @@
 package mochi.task;
 
 /**
- * Represents a task without a date/time attached to it.
+ * Represents a to-do task (a task without any associated date/time).
+ *
+ * <p>Storage format:
+ * {@code T | <doneFlag> | <description>}
+ *
+ * @author Kacey Isaiah Yonathan
  */
 public class Todo extends Task {
 
     /**
-     * Creates a to-do task.
+     * Creates a to-do task with the given description.
      *
      * @param description The task description.
+     * @throws IllegalArgumentException If {@code description} is {@code null} or blank.
      */
     public Todo(String description) {
         super(description);
@@ -17,7 +23,7 @@ public class Todo extends Task {
     /**
      * Returns the UI representation of this to-do task.
      *
-     * @return A formatted string for display.
+     * @return Display string in the format {@code [T] [X] description} or {@code [T] [ ] description}.
      */
     @Override
     public String toString() {
@@ -27,7 +33,7 @@ public class Todo extends Task {
     /**
      * Returns the save-file representation of this to-do task.
      *
-     * @return A formatted string for storage.
+     * @return Storage string in the format {@code T | <doneFlag> | <description>}.
      */
     @Override
     public String toWrite() {
