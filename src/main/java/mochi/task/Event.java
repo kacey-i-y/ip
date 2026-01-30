@@ -14,23 +14,33 @@ public class Event extends Task {
     /**
      * Creates an event task.
      *
-     * @param echo The task description.
+     * @param description The task description.
      * @param from The start time of the event.
      * @param to The end time of the event.
      */
-    public Event(String echo, String from, String to) {
-        super(echo);
+    public Event(String description, String from, String to) {
+        super(description);
         this.from = from;
         this.to = to;
     }
 
+    /**
+     * Returns the UI representation of this event task.
+     *
+     * @return A formatted string for display.
+     */
     @Override
     public String toString() {
-        return "[E]" + super.toString() + " (from: " + this.from + " to: " + this.to + ")";
+        return "[E] " + super.toString() + " (from: " + this.from + " to: " + this.to + ")";
     }
 
+    /**
+     * Returns the save-file representation of this event task.
+     *
+     * @return A formatted string for storage.
+     */
     @Override
     public String toWrite() {
-        return "D | " + super.toWrite() + " | " + this.from + " | " + this.to;
+        return "E | " + super.toWrite() + " | " + this.from + " | " + this.to;
     }
 }
