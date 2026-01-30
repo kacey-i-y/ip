@@ -3,7 +3,7 @@ package mochi.task;
 /**
  * Represents a task with a description and completion status.
  */
-public class Task {
+public abstract class Task {
 
     /** Indicates whether the task is marked as done. */
     protected boolean marked;
@@ -43,5 +43,9 @@ public class Task {
     @Override
     public String toString() {
         return "[" + (!this.marked ? " " : "X") + "] " + this.echo;
+    }
+
+    public String toWrite() {
+        return (this.marked ? "1 " : "0 ") + "| " + this.echo;
     }
 }

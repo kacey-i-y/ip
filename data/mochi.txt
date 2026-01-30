@@ -1,0 +1,3 @@
+T | 1 | say hello
+T | 0 | say goodbye
+D | 1 | do homework | tomorrow

@@ -59,6 +59,29 @@ public class Mochi {
         }
     }
 
+    private static void updateFile(ArrayList<Task> tasks) {
+        File file = new File(DATA_PATH, FILE_NAME);
+        File dir = file.getParentFile(); // "data"
+
+        if (dir != null && !dir.exists()) {
+            if (!dir.mkdirs()) {
+                System.out.println("Folder does not exist and cannot be created: " + dir.getPath());
+                System.out.println("Cannot proceed with saving file");
+                return;
+            }
+        }
+
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(file))) {
+            for (Task t : tasks) {
+                bw.write(t.toWrite());
+                bw.newLine();
+            }
+        } catch (IOException e) {
+            System.out.println("Error saving: " + e.getMessage());
+            System.out.println("Cannot proceed with saving file");
+        }
+    }
+
     /**
      * Prints one single horizontal line to indicate different sections
      */
@@ -113,6 +136,7 @@ public class Mochi {
 
         String echo = "init";
         ArrayList<Task> lst = new ArrayList<>();
+
         File file = new File(DATA_PATH, FILE_NAME);
         if (!file.exists()) {
             System.out.println("Folder/file is not present");
@@ -149,7 +173,7 @@ public class Mochi {
                                 throw new RuntimeException();
                         }
                         lst.add(current);
-                    }  catch (RuntimeException e) {
+                    } catch (RuntimeException e) {
                         System.out.println("Error reading line :\n" + line);
                     }
                 }
@@ -158,8 +182,12 @@ public class Mochi {
                 for (int i = 0; i < lst.size(); i++) {
                     System.out.println((i + 1) + "." + lst.get(i));
                 }
+            } catch (FileNotFoundException e) {
+                System.out.println("Save file path not found: " + e.getMessage());
+                System.out.println("Cannot proceed with reading file");
             } catch (IOException e) {
                 System.out.println("Error reading save file: " + e.getMessage());
+                System.out.println("Cannot proceed with reading file");
             }
         }
         Mochi.printLine();
@@ -273,7 +301,7 @@ public class Mochi {
                 }
                 default -> Mochi.error();
             }
-
+            Mochi.updateFile(lst);
             Mochi.printLine();
         }
 
