@@ -11,6 +11,8 @@ import mochi.task.Task;
 import mochi.task.TaskList;
 import mochi.ui.Ui;
 
+//Code has been made to have JavaDoc comments
+
 /**
  * Main application class for the Mochi CLI chatbot.
  *
