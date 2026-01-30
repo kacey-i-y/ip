@@ -10,6 +10,11 @@ import java.io.InputStreamReader;
 
 import java.util.ArrayList;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+
 import mochi.task.Deadline;
 import mochi.task.Event;
 import mochi.task.Task;
@@ -20,8 +25,10 @@ import mochi.task.Todo;
  * (to-dos, deadlines, and events), with automatic save/load to disk.
  */
 public class Mochi {
+    private static final DateTimeFormatter EVENT_INPUT_FORMAT =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HHmm");
     private static final String DATA_DIR_NAME = "data";
-    private static final String SAVE_FILE_NAME = "mochi.txt";
+    private static final String SAVqE_FILE_NAME = "tasks.txt";
     private static final String SEPARATOR = "____________________________________________________________";
     private static final String PIPE_SPLIT_REGEX = "\\s*\\|\\s*";
 
