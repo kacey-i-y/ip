@@ -168,6 +168,7 @@ public class Ui {
         System.out.println("unmark <number>");
         System.out.println("delete <number>");
         System.out.println("list");
+        System.out.println("find");
         System.out.println("bye");
     }
 
