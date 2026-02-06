@@ -1,11 +1,12 @@
 package mochi.parser;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
 import mochi.task.Deadline;
-import mochi.task.Event;
 import mochi.task.Todo;
 
 public class ParserTest {
@@ -31,13 +32,13 @@ public class ParserTest {
     }
 
     @Test
-    public void parse_event_invalidTimeRange_throws() {
+    public void parse_eventEndBeforeStart_throwsIllegalArgumentException() {
         assertThrows(IllegalArgumentException.class, () ->
                 Parser.parse("event meet /from 2026-01-30 1800 /to 2026-01-30 1700"));
     }
 
     @Test
-    public void parse_mark_invalidIndex_throws() {
+    public void parseMarkIndexZero_throwsIllegalArgumentException() {
         assertThrows(IllegalArgumentException.class, () ->
                 Parser.parse("mark 0"));
     }

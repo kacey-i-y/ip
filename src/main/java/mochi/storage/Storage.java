@@ -135,34 +135,34 @@ public class Storage {
         Task task;
         try {
             task = switch (type) {
-                case "T" -> new Todo(parts[2].trim());
+            case "T" -> new Todo(parts[2].trim());
 
-                case "D" -> {
-                    if (parts.length < 4) {
-                        throw new IllegalArgumentException("Deadline missing by");
-                    }
-                    LocalDate byDate = LocalDate.parse(parts[3].trim());
-                    yield new Deadline(parts[2].trim(), byDate);
+            case "D" -> {
+                if (parts.length < 4) {
+                    throw new IllegalArgumentException("Deadline missing by");
+                }
+                LocalDate byDate = LocalDate.parse(parts[3].trim());
+                yield new Deadline(parts[2].trim(), byDate);
+            }
+
+            case "E" -> {
+                if (parts.length < 5) {
+                    throw new IllegalArgumentException("Event missing from/to");
                 }
 
-                case "E" -> {
-                    if (parts.length < 5) {
-                        throw new IllegalArgumentException("Event missing from/to");
-                    }
+                LocalDateTime fromDateTime =
+                        LocalDateTime.parse(parts[3].trim(), EVENT_SAVE_FORMAT);
+                LocalDateTime toDateTime =
+                        LocalDateTime.parse(parts[4].trim(), EVENT_SAVE_FORMAT);
 
-                    LocalDateTime fromDateTime =
-                            LocalDateTime.parse(parts[3].trim(), EVENT_SAVE_FORMAT);
-                    LocalDateTime toDateTime =
-                            LocalDateTime.parse(parts[4].trim(), EVENT_SAVE_FORMAT);
-
-                    if (!toDateTime.isAfter(fromDateTime)) {
-                        throw new IllegalArgumentException("Event end must be after start");
-                    }
-
-                    yield new Event(parts[2].trim(), fromDateTime, toDateTime);
+                if (!toDateTime.isAfter(fromDateTime)) {
+                    throw new IllegalArgumentException("Event end must be after start");
                 }
 
-                default -> throw new IllegalArgumentException("Unknown task type: " + type);
+                yield new Event(parts[2].trim(), fromDateTime, toDateTime);
+            }
+
+            default -> throw new IllegalArgumentException("Unknown task type: " + type);
             };
         } catch (DateTimeParseException e) {
             throw new IllegalArgumentException("Bad date/time format", e);

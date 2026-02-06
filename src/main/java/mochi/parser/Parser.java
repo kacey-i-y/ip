@@ -95,20 +95,20 @@ public class Parser {
         String firstToken = trimmed.split("\\s+")[0].toLowerCase();
 
         return switch (firstToken) {
-            case "list" -> new ParsedCommand(Command.LIST, -1, null, null);
-            case "bye" -> new ParsedCommand(Command.BYE, -1, null, null);
+        case "list" -> new ParsedCommand(Command.LIST, -1, null, null);
+        case "bye" -> new ParsedCommand(Command.BYE, -1, null, null);
 
-            case "mark" -> new ParsedCommand(Command.MARK, parseIndex(trimmed), null, null);
-            case "unmark" -> new ParsedCommand(Command.UNMARK, parseIndex(trimmed), null, null);
-            case "delete" -> new ParsedCommand(Command.DELETE, parseIndex(trimmed), null, null);
+        case "mark" -> new ParsedCommand(Command.MARK, parseIndex(trimmed), null, null);
+        case "unmark" -> new ParsedCommand(Command.UNMARK, parseIndex(trimmed), null, null);
+        case "delete" -> new ParsedCommand(Command.DELETE, parseIndex(trimmed), null, null);
 
-            case "todo" -> new ParsedCommand(Command.TODO, -1, parseTodo(trimmed), null);
-            case "deadline" -> new ParsedCommand(Command.DEADLINE, -1, parseDeadline(trimmed), null);
-            case "event" -> new ParsedCommand(Command.EVENT, -1, parseEvent(trimmed), null);
+        case "todo" -> new ParsedCommand(Command.TODO, -1, parseTodo(trimmed), null);
+        case "deadline" -> new ParsedCommand(Command.DEADLINE, -1, parseDeadline(trimmed), null);
+        case "event" -> new ParsedCommand(Command.EVENT, -1, parseEvent(trimmed), null);
 
-            case "find" -> new ParsedCommand(Command.FIND, -1, null, parseFindKeyword(trimmed));
+        case "find" -> new ParsedCommand(Command.FIND, -1, null, parseFindKeyword(trimmed));
 
-            default -> throw new IllegalArgumentException("Unknown command");
+        default -> throw new IllegalArgumentException("Unknown command");
         };
     }
 
