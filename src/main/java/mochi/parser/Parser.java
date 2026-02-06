@@ -19,13 +19,8 @@ import mochi.task.Todo;
  *   <li>a {@link Command} type</li>
  *   <li>an optional 0-based index for commands like mark/unmark/delete</li>
  *   <li>an optional {@link Task} object for commands that create tasks</li>
- *   <li>an optional keyword for {@code find} commands</li>
+ *   <li>an optional keyword for {@code find}</li>
  * </ul>
- *
- * <p>Design note: This is a utility class (no instances). All parsing logic is centralized
- * here to keep UI and storage responsibilities separate.
- *
- * @author Kacey Isaiah Yonathan
  */
 public class Parser {
 
@@ -68,16 +63,6 @@ public class Parser {
     /**
      * Parses raw user input into a {@link ParsedCommand}.
      *
-     * <p>Examples:
-     * <ul>
-     *   <li>{@code list}</li>
-     *   <li>{@code mark 2}</li>
-     *   <li>{@code todo borrow book}</li>
-     *   <li>{@code deadline return book /by 2026-01-30}</li>
-     *   <li>{@code event meeting /from 2026-01-30 1800 /to 2026-01-30 2000}</li>
-     *   <li>{@code find book}</li>
-     * </ul>
-     *
      * @param input User input line.
      * @return Parsed command object.
      * @throws IllegalArgumentException If the input is empty, malformed, or unknown.
@@ -95,20 +80,20 @@ public class Parser {
         String firstToken = trimmed.split("\\s+")[0].toLowerCase();
 
         return switch (firstToken) {
-        case "list" -> new ParsedCommand(Command.LIST, -1, null, null);
-        case "bye" -> new ParsedCommand(Command.BYE, -1, null, null);
+            case "list" -> new ParsedCommand(Command.LIST, -1, null, null);
+            case "bye" -> new ParsedCommand(Command.BYE, -1, null, null);
 
-        case "mark" -> new ParsedCommand(Command.MARK, parseIndex(trimmed), null, null);
-        case "unmark" -> new ParsedCommand(Command.UNMARK, parseIndex(trimmed), null, null);
-        case "delete" -> new ParsedCommand(Command.DELETE, parseIndex(trimmed), null, null);
+            case "mark" -> new ParsedCommand(Command.MARK, parseIndex(trimmed), null, null);
+            case "unmark" -> new ParsedCommand(Command.UNMARK, parseIndex(trimmed), null, null);
+            case "delete" -> new ParsedCommand(Command.DELETE, parseIndex(trimmed), null, null);
 
-        case "todo" -> new ParsedCommand(Command.TODO, -1, parseTodo(trimmed), null);
-        case "deadline" -> new ParsedCommand(Command.DEADLINE, -1, parseDeadline(trimmed), null);
-        case "event" -> new ParsedCommand(Command.EVENT, -1, parseEvent(trimmed), null);
+            case "todo" -> new ParsedCommand(Command.TODO, -1, parseTodo(trimmed), null);
+            case "deadline" -> new ParsedCommand(Command.DEADLINE, -1, parseDeadline(trimmed), null);
+            case "event" -> new ParsedCommand(Command.EVENT, -1, parseEvent(trimmed), null);
 
-        case "find" -> new ParsedCommand(Command.FIND, -1, null, parseFindKeyword(trimmed));
+            case "find" -> new ParsedCommand(Command.FIND, -1, null, parseFindKeyword(trimmed));
 
-        default -> throw new IllegalArgumentException("Unknown command");
+            default -> throw new IllegalArgumentException("Unknown command");
         };
     }
 
@@ -138,13 +123,10 @@ public class Parser {
     }
 
     /**
-     * Parses a {@code find} command keyword.
-     *
-     * <p>Format: {@code find <keyword>}
+     * Parses the keyword portion of a {@code find} command.
      *
      * @param input Full user input line.
      * @return Keyword string.
-     * @throws IllegalArgumentException If keyword is missing/blank.
      */
     private static String parseFindKeyword(String input) {
         String[] parts = input.split("find\\s+", 2);
@@ -157,11 +139,8 @@ public class Parser {
     /**
      * Parses a {@code todo} command.
      *
-     * <p>Format: {@code todo <description>}
-     *
      * @param input Full user input line.
      * @return A {@link Todo} task.
-     * @throws IllegalArgumentException If description is missing/blank.
      */
     private static Task parseTodo(String input) {
         String[] parts = input.split("todo\\s+", 2);
@@ -175,11 +154,8 @@ public class Parser {
     /**
      * Parses a {@code deadline} command.
      *
-     * <p>Format: {@code deadline <description> /by <yyyy-MM-dd>}
-     *
      * @param input Full user input line.
      * @return A {@link Deadline} task.
-     * @throws IllegalArgumentException If format is invalid or date cannot be parsed.
      */
     private static Task parseDeadline(String input) {
         String[] parts = input.split("deadline\\s+", 2);
@@ -210,15 +186,8 @@ public class Parser {
     /**
      * Parses an {@code event} command.
      *
-     * <p>Format:
-     * {@code event <description> /from <yyyy-MM-dd HHmm> /to <yyyy-MM-dd HHmm>}
-     *
-     * <p>Validation rule: {@code /to} must be strictly after {@code /from}.
-     *
      * @param input Full user input line.
      * @return An {@link Event} task.
-     * @throws IllegalArgumentException If format is invalid, date cannot be parsed,
-     *                                  or {@code /to} is not after {@code /from}.
      */
     private static Task parseEvent(String input) {
         String[] parts = input.split("event\\s+", 2);

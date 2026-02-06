@@ -1,104 +1,65 @@
 package mochi.task;
 
 /**
- * Represents a generic task with a description and a completion status.
- *
- * <p>Concrete subclasses (e.g. {@code Todo}, {@code Deadline}, {@code Event}) should:
- * <ul>
- *   <li>provide their own task-type prefix when saving (e.g. {@code T | ...})</li>
- *   <li>override {@link #toWrite()} to include any additional fields</li>
- * </ul>
- *
- * @author Kacey Isaiah Yonathan
+ * Represents a task with a description and completion status.
  */
 public abstract class Task {
-
-    /** Task description as entered by the user. */
-    protected final String description;
 
     /** Indicates whether the task is marked as done. */
     protected boolean isDone;
 
+    /** The task description as entered by the user. */
+    protected String description;
+
     /**
-     * Creates a task with the given description. New tasks are unmarked by default.
+     * Creates a task.
      *
      * @param description The task description.
-     * @throws IllegalArgumentException If {@code description} is {@code null} or blank.
      */
     public Task(String description) {
-        if (description == null || description.trim().isEmpty()) {
-            throw new IllegalArgumentException("Task description cannot be null/blank");
-        }
-
-        this.description = description.trim();
         this.isDone = false;
+        this.description = description;
     }
 
     /**
-     * Marks this task as completed.
+     * Marks the task as completed.
      */
     public void mark() {
         this.isDone = true;
     }
 
     /**
-     * Marks this task as not completed.
+     * Marks the task as not completed.
      */
     public void unmark() {
         this.isDone = false;
     }
 
     /**
-     * Returns the task description.
+     * Returns whether the task is marked done.
      *
-     * @return Task description.
-     */
-    public String getDescription() {
-        return description;
-    }
-
-    /**
-     * Returns whether this task is marked as done.
-     *
-     * @return {@code true} if done, {@code false} otherwise.
+     * @return True if done, false otherwise.
      */
     public boolean isDone() {
         return isDone;
     }
 
     /**
-     * Returns the string representation of the task used for displaying in the list.
+     * Returns the string representation of the task in the list format.
      *
-     * @return Display string in the format {@code [X] description} or {@code [ ] description}.
+     * @return A formatted string representing the task.
      */
     @Override
     public String toString() {
-        return "[" + (isDone ? "X" : " ") + "] " + description;
+        return "[" + (this.isDone ? "X" : " ") + "] " + this.description;
     }
 
     /**
-     * Returns the task data in a format suitable for writing to the save file.
+     * Returns the task data in a format suitable for writing to a save file.
      *
-     * <p>Subclasses should typically override this to prepend a type code
-     * (e.g. {@code T |}, {@code D |}, {@code E |}) and append any extra fields.
-     *
-     * @return Storage string containing at least the done flag and description.
+     * @return A formatted string representing the task for storage.
      */
     public String toWrite() {
-        return (isDone ? "1" : "0") + " | " + description;
-    }
-
-    /**
-     * Returns whether this task matches the given keyword (case-insensitive).
-     *
-     * @param keyword Keyword to search for.
-     * @return True if the description contains the keyword.
-     */
-    public boolean matchesKeyword(String keyword) {
-        if (keyword == null || keyword.trim().isEmpty()) {
-            return false;
-        }
-
-        return this.description.toLowerCase().contains(keyword.trim().toLowerCase());
+        return (this.isDone ? "1 " : "0 ") + "| " + this.description;
     }
 }

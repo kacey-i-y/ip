@@ -1,216 +1,133 @@
 package mochi.ui;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-
 import mochi.task.Task;
 import mochi.task.TaskList;
 
 /**
- * Handles all user interaction for the Mochi chatbot.
+ * Provides user-facing messages for Mochi.
  *
- * <p>Responsibilities:
- * <ul>
- *   <li>Read user input from stdin</li>
- *   <li>Print messages (welcome/help/errors/status updates)</li>
- *   <li>Print task-related feedback (list/add/delete/mark)</li>
- * </ul>
- *
- * @author Kacey Isaiah Yonathan
+ * <p>In GUI mode, these strings can be displayed in the chat window.
+ * In CLI mode, they can be printed directly.
  */
 public class Ui {
 
-    /** Horizontal separator line used in CLI output. */
-    private static final String SEPARATOR =
-            "____________________________________________________________";
-
-    /** Input source for reading user commands. */
-    private final BufferedReader reader;
+    private static final String LINE = "____________________________________________________________";
 
     /**
-     * Creates a UI that reads from the given {@link BufferedReader}.
+     * Returns the divider line.
      *
-     * @param reader Reader used to read user input.
+     * @return Divider line.
      */
-    public Ui(BufferedReader reader) {
-        this.reader = reader;
+    public String getSeparator() {
+        return LINE;
     }
 
     /**
-     * Reads the next line of user input.
+     * Returns the welcome message.
      *
-     * @return The next input line, or {@code null} if EOF is reached.
-     * @throws IOException If reading fails.
+     * @return Welcome message.
      */
-    public String readCommand() throws IOException {
-        return reader.readLine();
+    public String getWelcome() {
+        return "Hello! I'm Mochi.\nWhat can I do for you?";
     }
 
     /**
-     * Prints a simple load status message after reading tasks from disk.
+     * Returns the goodbye message.
      *
-     * @param taskList Loaded task list.
+     * @return Goodbye message.
      */
-    public void showLoadStatus(TaskList taskList) {
-        if (taskList.isEmpty()) {
-            System.out.println("No tasks loaded from disk.");
-            return;
-        }
-        System.out.println("Loaded " + taskList.size() + " task(s) from disk.");
+    public String getGoodbye() {
+        return "Bye. Hope to see you again soon!";
     }
 
     /**
-     * Prints all tasks with 1-based indexing.
+     * Returns a generic error message.
      *
-     * @param tasks Task list to print.
+     * @return Error message.
      */
-    public void showTaskList(TaskList tasks) {
+    public String getGenericError() {
+        return "Oops, I don't understand that. Try 'help' or check your format.";
+    }
+
+    /**
+     * Returns a message after adding a task.
+     *
+     * @param task Added task.
+     * @param size New size of task list.
+     * @return Message string.
+     */
+    public String getTaskAdded(Task task, int size) {
+        return "Got it. I've added this task:\n  " + task
+                + "\nNow you have " + size + " tasks in the list.";
+    }
+
+    /**
+     * Returns a message after removing a task.
+     *
+     * @param task Removed task.
+     * @param size New size of task list.
+     * @return Message string.
+     */
+    public String getTaskRemoved(Task task, int size) {
+        return "Noted. I've removed this task:\n  " + task
+                + "\nNow you have " + size + " tasks in the list.";
+    }
+
+    /**
+     * Returns a message after marking or unmarking a task.
+     *
+     * @param task Task updated.
+     * @param isMark True if marking done, false if unmarking.
+     * @return Message string.
+     */
+    public String getTaskMarkStatus(Task task, boolean isMark) {
+        String prefix = isMark ? "Nice! I've marked this task as done:" : "OK, I've marked this task as not done yet:";
+        return prefix + "\n  " + task;
+    }
+
+    /**
+     * Returns a formatted list of tasks.
+     *
+     * @param tasks Task list.
+     * @return Message string.
+     */
+    public String getTaskList(TaskList tasks) {
         if (tasks.isEmpty()) {
-            System.out.println("Your task list is empty.");
-            return;
+            return "Your list is empty for now.";
         }
 
-        System.out.println("The following tasks are listed in the task list:");
+        StringBuilder sb = new StringBuilder("Here are the tasks in your list:");
         for (int i = 0; i < tasks.size(); i++) {
-            System.out.println((i + 1) + ". " + tasks.get(i));
+            sb.append("\n").append(i + 1).append(". ").append(tasks.get(i));
         }
+        return sb.toString();
     }
 
     /**
-     * Prints a message confirming a task has been added.
+     * Returns a formatted find result list.
      *
-     * @param task Newly added task.
-     * @param size Current size of task list.
+     * @param matches Matching tasks.
+     * @return Message string.
      */
-    public void showTaskAdded(Task task, int size) {
-        System.out.println("Added: " + task);
-        System.out.println("Currently, we have " + size + " task(s) on the list.");
-    }
-
-    /**
-     * Prints a message confirming a task has been removed.
-     *
-     * @param removed Removed task.
-     * @param size Current size of task list.
-     */
-    public void showTaskRemoved(Task removed, int size) {
-        System.out.println("Removed: " + removed);
-        System.out.println("Currently, we have " + size + " task(s) on the list.");
-    }
-
-    /**
-     * Prints a message confirming a task has been marked or unmarked.
-     *
-     * @param task Task that was updated.
-     * @param isMarked True if marked as done, false if unmarked.
-     */
-    public void showTaskMarkStatus(Task task, boolean isMarked) {
-        if (isMarked) {
-            System.out.println("Marked as done: " + task);
-            return;
-        }
-        System.out.println("Marked as not done: " + task);
-    }
-
-    /**
-     * Prints the ASCII logo and greeting message.
-     */
-    public void showWelcome() {
-        String logo =
-                "             .@@@@@@@@@@@@@@@.\n"
-                        + "          .@@@@@@@@@@@@@@@@@@@@@.\n"
-                        + "        .@@@@@@@@@@@@@@@@@@@@@@@@@.\n"
-                        + "       @@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-                        + "      @@@@@@   (* )     ( *)   @@@@@@\n"
-                        + "      @@@@@@       .  ^  .       @@@@@@\n"
-                        + "       @@@@@@@      ' w '      @@@@@@@\n"
-                        + "        @@@@@@@@.           .@@@@@@@@\n"
-                        + "          \"@@@@@@@@@@@@@@@@@@@@@@@\"" + "\n"
-                        + "      __  __   ____    ____  _   _  ___\n"
-                        + "     |  \\/  | / __ \\  / ___|| | | ||_ _|\n"
-                        + "     | |\\/| || |  | || |    | |_| | | |\n"
-                        + "     | |  | || |__| || |___ |  _  | | |\n"
-                        + "     |_|  |_| \\____/  \\____||_| |_||___|\n";
-
-        showSeparator();
-        System.out.print(logo);
-        showSeparator();
-        System.out.println("Hello I'm MOCHI, your cutest personal chatbot (˶˃ ᵕ ˂˶)");
-        System.out.println("Is there anything I can help you with today?");
-        showSeparator();
-    }
-
-    /**
-     * Prints the list of accepted command formats.
-     */
-    public void showHelp() {
-        System.out.println("Please follow the following formats:");
-        System.out.println("todo <task>");
-        System.out.println("deadline <task> /by yyyy-MM-dd");
-        System.out.println("event <task> /from yyyy-MM-dd HHmm /to yyyy-MM-dd HHmm");
-        System.out.println("mark <number>");
-        System.out.println("unmark <number>");
-        System.out.println("delete <number>");
-        System.out.println("list");
-        System.out.println("bye");
-        showSeparator();
-    }
-
-    /**
-     * Prints a generic error message for invalid commands.
-     */
-    public void showError() {
-        System.out.println("Error, please follow the specified formats:");
-        System.out.println("todo <task>");
-        System.out.println("deadline <task> /by yyyy-MM-dd");
-        System.out.println("event <task> /from yyyy-MM-dd HHmm /to yyyy-MM-dd HHmm");
-        System.out.println("mark <number>");
-        System.out.println("unmark <number>");
-        System.out.println("delete <number>");
-        System.out.println("list");
-        System.out.println("find");
-        System.out.println("bye");
-    }
-
-    /**
-     * Prints a warning when saving fails.
-     *
-     * @param message Error message from exception.
-     */
-    public void showSaveError(String message) {
-        System.out.println("Error saving tasks: " + message);
-    }
-
-    /**
-     * Prints the goodbye message.
-     */
-    public void showGoodbye() {
-        showSeparator();
-        System.out.println("Bye-bye, Please come back soon ദ്ദി(˵ •̀ ᴗ - ˵ ) ✧!!!");
-        showSeparator();
-    }
-
-    /**
-     * Prints a horizontal separator.
-     */
-    public void showSeparator() {
-        System.out.println(SEPARATOR);
-    }
-
-    /**
-     * Prints tasks that match a keyword search.
-     *
-     * @param matches The list of matching tasks.
-     */
-    public void showFindResults(TaskList matches) {
+    public String getFindResults(TaskList matches) {
         if (matches.isEmpty()) {
-            System.out.println("No matching tasks found.");
-            return;
+            return "No matching tasks found.";
         }
 
-        System.out.println("Here are the matching tasks in your list:");
+        StringBuilder sb = new StringBuilder("Here are the matching tasks in your list:");
         for (int i = 0; i < matches.size(); i++) {
-            System.out.println((i + 1) + ". " + matches.get(i));
+            sb.append("\n").append(i + 1).append(". ").append(matches.get(i));
         }
+        return sb.toString();
+    }
+
+    /**
+     * Returns a message when saving fails.
+     *
+     * @param message IOException message.
+     * @return Message string.
+     */
+    public String getSaveError(String message) {
+        return "Warning: failed to save tasks (" + message + ").";
     }
 }
