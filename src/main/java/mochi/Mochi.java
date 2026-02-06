@@ -11,9 +11,6 @@ import mochi.task.Task;
 import mochi.task.TaskList;
 import mochi.ui.Ui;
 
-//Code has been made to have JavaDoc comments
-//Code has been made to follow the proper Coding Standard
-
 /**
  * Main application class for the Mochi CLI chatbot.
  *
@@ -29,10 +26,14 @@ import mochi.ui.Ui;
  */
 public class Mochi {
 
-    /** Directory name for persistence data (relative to project root). */
+    /**
+     * Directory name for persistence data (relative to project root).
+     */
     private static final String DATA_DIR_NAME = "data";
 
-    /** Save file name used by {@link Storage}. */
+    /**
+     * Save file name used by {@link Storage}.
+     */
     private static final String SAVE_FILE_NAME = "tasks.txt";
 
     private final Ui ui;
@@ -55,7 +56,6 @@ public class Mochi {
         try {
             loaded = storage.load();
         } catch (Exception e) {
-            // In case your Storage.load() never throws, this still keeps Mochi robust.
             loaded = new TaskList();
         }
 
@@ -129,35 +129,31 @@ public class Mochi {
      */
     private boolean handleCommand(ParsedCommand parsed) {
         return switch (parsed.command()) {
-            case LIST -> {
-                ui.showTaskList(tasks);
-                yield false;
-            }
-
-            case MARK -> markTask(parsed.index(), true);
-            case UNMARK -> markTask(parsed.index(), false);
-            case DELETE -> deleteTask(parsed.index());
-
-            case TODO, DEADLINE, EVENT -> {
-                tasks.add(parsed.task());
-                ui.showTaskAdded(parsed.task(), tasks.size());
-                yield true;
-            }
-
-            case BYE -> false; // handled in run()
-
-            case FIND -> {
-                TaskList matches = tasks.find(parsed.keyword());
-                ui.showFindResults(matches);
-                yield false;
-            }
+        case LIST -> {
+            ui.showTaskList(tasks);
+            yield false;
+        }
+        case MARK -> markTask(parsed.index(), true);
+        case UNMARK -> markTask(parsed.index(), false);
+        case DELETE -> deleteTask(parsed.index());
+        case TODO, DEADLINE, EVENT -> {
+            tasks.add(parsed.task());
+            ui.showTaskAdded(parsed.task(), tasks.size());
+            yield true;
+        }
+        case FIND -> {
+            TaskList matches = tasks.find(parsed.keyword());
+            ui.showFindResults(matches);
+            yield false;
+        }
+        case BYE -> false; // handled in run()
         };
     }
 
     /**
      * Marks or unmarks a task.
      *
-     * @param index 0-based index.
+     * @param index      0-based index.
      * @param shouldMark True to mark done, false to unmark.
      * @return {@code true} if successful.
      */
