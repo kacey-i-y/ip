@@ -1,6 +1,6 @@
-T | 1 | say hello
 T | 1 | say goodbye
 D | 0 | do homework | 2026-01-31
-D | 0 | say hi to everyone | 2026-01-30
+D | 1 | say hi to everyone | 2026-01-30
 E | 0 | project meeting | 2026-02-01 1800 | 2026-02-01 2000
 T | 0 | add say
+T | 0 | eat more mochi
