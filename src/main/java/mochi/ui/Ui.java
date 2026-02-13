@@ -132,6 +132,9 @@ public class Ui {
             list
               Shows all tasks
 
+            sort
+              Shows all tasks in a sorted order
+
             todo <description>
               Example: todo read book
 
