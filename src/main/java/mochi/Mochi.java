@@ -135,6 +135,7 @@ public class Mochi {
     private String handleCommand(ParsedCommand parsed) {
         return switch (parsed.command()) {
         case LIST -> ui.getTaskList(tasks);
+        case SORT -> ui.getSortedTaskList(tasks);
         case MARK -> markTask(parsed.index(), true);
         case UNMARK -> markTask(parsed.index(), false);
         case DELETE -> deleteTask(parsed.index());

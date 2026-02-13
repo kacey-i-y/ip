@@ -68,4 +68,22 @@ public class Event extends Task {
                 + " | " + this.from.format(SAVE_FORMAT)
                 + " | " + this.to.format(SAVE_FORMAT);
     }
+
+    /**
+     * Returns the start date/time of the event.
+     *
+     * @return Start date/time.
+     */
+    public LocalDateTime getFrom() {
+        return from;
+    }
+
+    /**
+     * Returns the end date/time of the event.
+     *
+     * @return End date/time.
+     */
+    public LocalDateTime getTo() {
+        return to;
+    }
 }
