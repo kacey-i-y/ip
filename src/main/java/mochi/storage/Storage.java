@@ -118,37 +118,7 @@ public class Storage {
         String type = parts[0].trim().toUpperCase();
         String done = parts[1].trim();
 
-        Task task;
-        try {
-            task = switch (type) {
-            case "T" -> new Todo(parts[2].trim());
-            case "D" -> {
-                if (parts.length < 4) {
-                    throw new IllegalArgumentException("Deadline missing by");
-                }
-                LocalDate byDate = LocalDate.parse(parts[3].trim()); // yyyy-MM-dd
-                yield new Deadline(parts[2].trim(), byDate);
-            }
-            case "E" -> {
-                if (parts.length < 5) {
-                    throw new IllegalArgumentException("Event missing from/to");
-                }
-                LocalDateTime fromDateTime =
-                        LocalDateTime.parse(parts[3].trim(), EVENT_SAVE_FORMAT);
-                LocalDateTime toDateTime =
-                        LocalDateTime.parse(parts[4].trim(), EVENT_SAVE_FORMAT);
-
-                if (!toDateTime.isAfter(fromDateTime)) {
-                    throw new IllegalArgumentException("Event end must be after start");
-                }
-
-                yield new Event(parts[2].trim(), fromDateTime, toDateTime);
-            }
-            default -> throw new IllegalArgumentException("Unknown type");
-            };
-        } catch (DateTimeParseException e) {
-            throw new IllegalArgumentException("Bad date/time format", e);
-        }
+        Task task = parseTask(parts, type);
 
         if ("1".equals(done)) {
             task.mark();
@@ -159,6 +129,126 @@ public class Storage {
         }
 
         return task;
+    }
+
+    /**
+     * Parses the task portion of a saved line based on the task type.
+     *
+     * @param parts Split fields from the save file line.
+     * @param type  Task type token (e.g. "T", "D", "E").
+     * @return Parsed {@link Task}.
+     * @throws IllegalArgumentException If the type is unknown or fields are invalid.
+     */
+    private static Task parseTask(String[] parts, String type) {
+        return switch (type) {
+        case "T" -> parseTodo(parts);
+        case "D" -> parseDeadline(parts);
+        case "E" -> parseEvent(parts);
+        default -> throw new IllegalArgumentException("Unknown type");
+        };
+    }
+
+    /**
+     * Parses a Todo task from the given fields.
+     *
+     * @param parts Split fields from the save file line.
+     * @return A {@link Todo}.
+     * @throws IllegalArgumentException If required fields are missing.
+     */
+    private static Task parseTodo(String[] parts) {
+        requireMinFields(parts, 3, "Todo missing description");
+        return new Todo(parts[2].trim());
+    }
+
+    /**
+     * Parses a Deadline task from the given fields.
+     *
+     * @param parts Split fields from the save file line.
+     * @return A {@link Deadline}.
+     * @throws IllegalArgumentException If required fields are missing or date is invalid.
+     */
+    private static Task parseDeadline(String[] parts) {
+        requireMinFields(parts, 4, "Deadline missing by");
+
+        String description = parts[2].trim();
+        LocalDate byDate = parseLocalDate(parts[3].trim());
+        return new Deadline(description, byDate);
+    }
+
+    /**
+     * Parses an Event task from the given fields.
+     *
+     * @param parts Split fields from the save file line.
+     * @return An {@link Event}.
+     * @throws IllegalArgumentException If required fields are missing, date/time is invalid,
+     *                                  or the time range is not valid.
+     */
+    private static Task parseEvent(String[] parts) {
+        requireMinFields(parts, 5, "Event missing from/to");
+
+        String description = parts[2].trim();
+        LocalDateTime fromDateTime = parseLocalDateTime(parts[3].trim());
+        LocalDateTime toDateTime = parseLocalDateTime(parts[4].trim());
+
+        validateEventTimeRange(fromDateTime, toDateTime);
+        return new Event(description, fromDateTime, toDateTime);
+    }
+
+    /**
+     * Ensures the saved line has the minimum number of fields.
+     *
+     * @param parts     Split fields from the save file line.
+     * @param minLength Minimum required length.
+     * @param message   Error message if validation fails.
+     * @throws IllegalArgumentException If {@code parts.length < minLength}.
+     */
+    private static void requireMinFields(String[] parts, int minLength, String message) {
+        if (parts.length < minLength) {
+            throw new IllegalArgumentException(message);
+        }
+    }
+
+    /**
+     * Parses a date in {@code yyyy-MM-dd} format.
+     *
+     * @param raw Date string.
+     * @return Parsed {@link LocalDate}.
+     * @throws IllegalArgumentException If the date cannot be parsed.
+     */
+    private static LocalDate parseLocalDate(String raw) {
+        try {
+            return LocalDate.parse(raw); // yyyy-MM-dd
+        } catch (DateTimeParseException e) {
+            throw new IllegalArgumentException("Bad date/time format", e);
+        }
+    }
+
+    /**
+     * Parses an event date-time using {@code EVENT_SAVE_FORMAT}.
+     *
+     * @param raw Date-time string.
+     * @return Parsed {@link LocalDateTime}.
+     * @throws IllegalArgumentException If the date-time cannot be parsed.
+     */
+    private static LocalDateTime parseLocalDateTime(String raw) {
+        try {
+            return LocalDateTime.parse(raw, EVENT_SAVE_FORMAT);
+        } catch (DateTimeParseException e) {
+            throw new IllegalArgumentException("Bad date/time format", e);
+        }
+    }
+
+    /**
+     * Validates that an event end time is strictly after the start time.
+     *
+     * @param from Start date-time.
+     * @param to   End date-time.
+     * @throws IllegalArgumentException If {@code to} is not after {@code from}.
+     */
+    private static void validateEventTimeRange(LocalDateTime from, LocalDateTime to) {
+        if (!to.isAfter(from)) {
+            throw new IllegalArgumentException("Event end must be after start");
+        }
     }
 
     public String getLastLoadMessage() {
