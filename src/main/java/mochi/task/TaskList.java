@@ -24,6 +24,7 @@ public class TaskList {
      */
     public void add(Task task) {
         tasks.add(task);
+        assert task != null : "Cannot add null task";
     }
 
     /**
@@ -71,6 +72,9 @@ public class TaskList {
      * @return A new TaskList of matching tasks.
      */
     public TaskList find(String keyword) {
+        assert keyword != null : "Keyword must not be null";
+        assert !keyword.isBlank() : "Keyword must not be blank";
+
         TaskList matches = new TaskList();
         if (keyword == null) {
             return matches;

@@ -82,6 +82,7 @@ public class Storage {
      * @throws IOException If writing fails.
      */
     public void save(TaskList tasks) throws IOException {
+        assert tasks != null : "Cannot save a null TaskList";
         File dir = saveFile.getParentFile();
         if (dir != null && !dir.exists()) {
             dir.mkdirs();

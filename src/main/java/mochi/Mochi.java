@@ -75,65 +75,37 @@ public class Mochi {
     }
 
     /**
-     * Processes user input and returns Mochi's response string.
+     * Processes user input and returns Mochi's response message.
      *
-     * @param input Raw user input from the user.
-     * @return The response to be shown to the user.
+     * <p>This method:
+     * <ul>
+     *   <li>parses the input into a {@link ParsedCommand}</li>
+     *   <li>executes the command against the current {@link TaskList}</li>
+     *   <li>saves to disk if the command modifies the task list</li>
+     * </ul>
+     *
+     * @param input Raw user input (one command line).
+     * @return Response string to be displayed to the user.
      */
     public String getResponse(String input) {
-        ParsedCommand parsed = parseOrNull(input);
-        if (parsed == null) {
-            return formatError(ui.getGenericError());
+        ParsedCommand parsed;
+        try {
+            parsed = Parser.parse(input);
+        } catch (IllegalArgumentException e) {
+            return "Error: " + ui.getGenericError();
         }
 
         String response = handleCommand(parsed);
-        response = appendSaveErrorIfAny(response, parsed.command());
+
+        if (shouldSave(parsed.command())) {
+            try {
+                storage.save(tasks);
+            } catch (IOException e) {
+                response = response + "\n" + ui.getSaveError(e.getMessage());
+            }
+        }
 
         return response;
-    }
-
-    /**
-     * Parses the user input into a {@link ParsedCommand}.
-     *
-     * @param input Raw user input.
-     * @return ParsedCommand if parsing succeeds, otherwise {@code null}.
-     */
-    private ParsedCommand parseOrNull(String input) {
-        try {
-            return Parser.parse(input);
-        } catch (IllegalArgumentException e) {
-            return null;
-        }
-    }
-
-    /**
-     * Formats a message as an error so the GUI can detect it easily.
-     *
-     * @param message The error message to show.
-     * @return Error message with prefix.
-     */
-    private String formatError(String message) {
-        return "Error: " + message;
-    }
-
-    /**
-     * Saves the task list if needed and appends a save error message if saving fails.
-     *
-     * @param currentResponse Existing response message.
-     * @param command The parsed command.
-     * @return Response with save error appended (if any).
-     */
-    private String appendSaveErrorIfAny(String currentResponse, Parser.Command command) {
-        if (!shouldSave(command)) {
-            return currentResponse;
-        }
-
-        try {
-            storage.save(tasks);
-            return currentResponse;
-        } catch (IOException e) {
-            return currentResponse + "\n" + ui.getSaveError(e.getMessage());
-        }
     }
 
     /**
