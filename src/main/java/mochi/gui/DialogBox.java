@@ -73,4 +73,40 @@ public class DialogBox extends HBox {
         db.flip();
         return db;
     }
+
+    /**
+     * Applies inline styling to visually highlight this dialog as an error message.
+     *
+     * <p>The style uses a light red background and darker red text to make errors
+     * stand out from normal replies. This method is intended to be called after
+     * the FXML has been loaded and {@code dialog} has been injected.
+     */
+    private void setErrorStyle() {
+        dialog.setStyle(
+                "-fx-background-color: #ffdddd;"
+                        + "-fx-text-fill: #8a0000;"
+                        + "-fx-padding: 8 12 8 12;"
+                        + "-fx-background-radius: 10;"
+        );
+    }
+
+    /**
+     * Creates an error dialog box for displaying an error message in the chat UI.
+     *
+     * <p>The returned dialog box:
+     * <ul>
+     *   <li>uses the error styling applied by {@link #setErrorStyle()}</li>
+     *   <li>is flipped so that it appears on the left, consistent with Mochi replies</li>
+     * </ul>
+     *
+     * @param text Error message text to display.
+     * @param img  Display picture to show alongside the message.
+     * @return A {@code DialogBox} styled and positioned as an error dialog.
+     */
+    public static DialogBox getErrorDialog(String text, Image img) {
+        var db = new DialogBox(text, img);
+        db.setErrorStyle();
+        db.flip(); // keep Mochi/error on the left like Mochi dialog
+        return db;
+    }
 }

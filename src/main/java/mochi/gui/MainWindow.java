@@ -57,21 +57,24 @@ public class MainWindow {
     @FXML
     private void handleUserInput() {
         String input = userInput.getText();
-        if (input == null) {
-            return;
-        }
-
         String response = mochi.getResponse(input);
 
-        dialogContainer.getChildren().addAll(
-                DialogBox.getUserDialog(input, userImage),
-                DialogBox.getMochiDialog(response, mochiImage)
+        boolean isError = response != null && response.startsWith("Error:");
+
+        dialogContainer.getChildren().add(
+                DialogBox.getUserDialog(input, userImage)
         );
 
-        userInput.clear();
-
-        if (mochi.shouldExit()) {
-            Platform.exit();
+        if (isError) {
+            dialogContainer.getChildren().add(
+                    DialogBox.getErrorDialog(response, mochiImage)
+            );
+        } else {
+            dialogContainer.getChildren().add(
+                    DialogBox.getMochiDialog(response, mochiImage)
+            );
         }
+
+        userInput.clear();
     }
 }

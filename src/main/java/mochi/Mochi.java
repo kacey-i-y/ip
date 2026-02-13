@@ -85,7 +85,7 @@ public class Mochi {
         try {
             parsed = Parser.parse(input);
         } catch (IllegalArgumentException e) {
-            return ui.getGenericError();
+            return "Error: " + ui.getGenericError();
         }
 
         String response = handleCommand(parsed);
@@ -164,7 +164,7 @@ public class Mochi {
             }
             return ui.getTaskMarkStatus(task, shouldMark);
         } catch (IndexOutOfBoundsException e) {
-            return "Invalid task number.";
+            return "Error: Invalid task number.";
         }
     }
 
@@ -179,7 +179,7 @@ public class Mochi {
             Task removed = tasks.remove(index);
             return ui.getTaskRemoved(removed, tasks.size());
         } catch (IndexOutOfBoundsException e) {
-            return "Invalid task number.";
+            return "Error: Invalid task number.";
         }
     }
 }

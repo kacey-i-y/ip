@@ -4,3 +4,4 @@ D | 1 | say hi to everyone | 2026-01-30
 E | 0 | project meeting | 2026-02-01 1800 | 2026-02-01 2000
 T | 0 | add say
 T | 0 | eat more mochi
+T | 0 | hello
