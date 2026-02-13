@@ -130,4 +130,56 @@ public class Ui {
     public String getSaveError(String message) {
         return "Warning: failed to save tasks (" + message + ").";
     }
+
+    /**
+     * Returns a message when input is help
+     *
+     * @return Message string.
+     */
+    public String getHelpMessage() {
+        return """
+            Here are the commands you can use:
+
+            list
+              Shows all tasks
+
+            todo <description>
+              Example: todo read book
+
+            deadline <description> /by <yyyy-MM-dd>
+              Example: deadline return book /by 2026-01-30
+
+            event <description> /from <yyyy-MM-dd HHmm> /to <yyyy-MM-dd HHmm>
+              Example: event meeting /from 2026-01-30 1800 /to 2026-01-30 2000
+
+            mark <task number>
+              Example: mark 2
+
+            unmark <task number>
+              Example: unmark 2
+
+            delete <task number>
+              Example: delete 2
+
+            find <keyword>
+              Example: find book
+
+            help
+              Shows this help message
+
+            bye
+              Exits the app
+            """;
+    }
+
+    /**
+     * Returns a message when tasks.txt file is not found
+     *
+     * @return Message string.
+     */
+    public String getMissingDataFileMessage(String path) {
+        return "I couldn't find " + path + ".\n"
+                + "Starting with an empty task list.\n"
+                + "I'll create the file automatically when you save tasks.";
+    }
 }

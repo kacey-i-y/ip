@@ -27,6 +27,8 @@ public class Storage {
 
     private final File saveFile;
 
+    private String lastLoadMessage;
+
     /**
      * Creates a Storage that saves to {@code ./<dataDirName>/<fileName>}.
      *
@@ -38,15 +40,18 @@ public class Storage {
     }
 
     /**
-     * Loads tasks from disk. If the file does not exist, returns an empty TaskList.
+     * Loads tasks from disk. If the file does not exist, returns a message and an empty TaskList.
      * Corrupted lines are skipped.
      *
      * @return TaskList loaded from disk.
      */
     public TaskList load() {
         TaskList tasks = new TaskList();
+        lastLoadMessage = null; // reset for this load attempt
 
         if (!saveFile.exists()) {
+            lastLoadMessage = "I can't find " + saveFile.getPath()
+                    + ". Starting with an empty task list.";
             return tasks;
         }
 
@@ -61,6 +66,8 @@ public class Storage {
                 }
             }
         } catch (IOException e) {
+            lastLoadMessage = "I couldn't read " + saveFile.getPath()
+                    + ". Starting with an empty task list.";
             return new TaskList();
         }
 
@@ -152,5 +159,9 @@ public class Storage {
         }
 
         return task;
+    }
+
+    public String getLastLoadMessage() {
+        return lastLoadMessage;
     }
 }
