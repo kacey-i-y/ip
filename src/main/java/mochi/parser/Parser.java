@@ -39,7 +39,7 @@ public class Parser {
      * Supported user commands recognized by the parser.
      */
     public enum Command {
-        LIST, MARK, UNMARK, TODO, DEADLINE, EVENT, DELETE, FIND, HELP, BYE
+        LIST, SORT, MARK, UNMARK, TODO, DEADLINE, EVENT, DELETE, FIND, HELP, BYE
     }
 
     /**
@@ -81,6 +81,7 @@ public class Parser {
 
         return switch (firstToken) {
         case "list" -> new ParsedCommand(Command.LIST, -1, null, null);
+        case "sort" -> new ParsedCommand(Command.SORT, -1, null, null);
         case "bye" -> new ParsedCommand(Command.BYE, -1, null, null);
 
         case "mark" -> new ParsedCommand(Command.MARK, parseIndex(trimmed), null, null);

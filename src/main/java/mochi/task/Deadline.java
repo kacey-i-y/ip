@@ -50,4 +50,13 @@ public class Deadline extends Task {
     public String toWrite() {
         return "D | " + super.toWrite() + " | " + this.by;
     }
+
+    /**
+     * Returns the deadline date.
+     *
+     * @return Deadline date.
+     */
+    public LocalDate getBy() {
+        return by;
+    }
 }

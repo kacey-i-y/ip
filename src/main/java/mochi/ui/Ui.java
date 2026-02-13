@@ -11,17 +11,6 @@ import mochi.task.TaskList;
  */
 public class Ui {
 
-    private static final String LINE = "____________________________________________________________";
-
-    /**
-     * Returns the divider line.
-     *
-     * @return Divider line.
-     */
-    public String getSeparator() {
-        return LINE;
-    }
-
     /**
      * Returns the welcome message.
      *
@@ -143,6 +132,9 @@ public class Ui {
             list
               Shows all tasks
 
+            sort
+              Shows all tasks in a sorted order
+
             todo <description>
               Example: todo read book
 
@@ -181,5 +173,16 @@ public class Ui {
         return "I couldn't find " + path + ".\n"
                 + "Starting with an empty task list.\n"
                 + "I'll create the file automatically when you save tasks.";
+    }
+
+    /**
+     * Returns a sorted, grouped view of the task list for display.
+     *
+     * @param tasks Task list to sort and format.
+     * @return A formatted string of sorted tasks.
+     */
+    public String getSortedTaskList(TaskList tasks) {
+        assert tasks != null : "TaskList must not be null";
+        return tasks.getSortedForDisplay();
     }
 }

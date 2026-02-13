@@ -62,4 +62,13 @@ public abstract class Task {
     public String toWrite() {
         return (this.isDone ? "1 " : "0 ") + "| " + this.description;
     }
+
+    /**
+     * Returns the task description.
+     *
+     * @return Description string.
+     */
+    public String getDescription() {
+        return this.description;
+    }
 }
