@@ -45,6 +45,8 @@ public class Mochi {
      */
     private boolean shouldExit;
 
+    private final String startupMessage;
+
     /**
      * Creates a Mochi instance and loads tasks from disk.
      *
@@ -56,6 +58,11 @@ public class Mochi {
         this.storage = new Storage(DATA_DIR_NAME, SAVE_FILE_NAME);
         this.tasks = storage.load();
         this.shouldExit = false;
+
+        String loadMsg = storage.getLastLoadMessage();
+        this.startupMessage = (loadMsg == null)
+                ? ui.getWelcome()
+                : ui.getWelcome() + "\n" + loadMsg;
     }
 
     /**
@@ -85,7 +92,7 @@ public class Mochi {
         try {
             parsed = Parser.parse(input);
         } catch (IllegalArgumentException e) {
-            return ui.getGenericError();
+            return "Error: " + ui.getGenericError();
         }
 
         String response = handleCommand(parsed);
@@ -139,6 +146,7 @@ public class Mochi {
         }
 
         case FIND -> ui.getFindResults(tasks.find(parsed.keyword()));
+        case HELP -> ui.getHelpMessage();
 
         case BYE -> {
             shouldExit = true;
@@ -164,7 +172,7 @@ public class Mochi {
             }
             return ui.getTaskMarkStatus(task, shouldMark);
         } catch (IndexOutOfBoundsException e) {
-            return "Invalid task number.";
+            return "Error: Invalid task number.";
         }
     }
 
@@ -179,7 +187,16 @@ public class Mochi {
             Task removed = tasks.remove(index);
             return ui.getTaskRemoved(removed, tasks.size());
         } catch (IndexOutOfBoundsException e) {
-            return "Invalid task number.";
+            return "Error: Invalid task number.";
         }
+    }
+
+    /**
+     * Returns the message to show when the app starts (welcome + optional load warning).
+     *
+     * @return Startup message.
+     */
+    public String getStartupMessage() {
+        return startupMessage;
     }
 }

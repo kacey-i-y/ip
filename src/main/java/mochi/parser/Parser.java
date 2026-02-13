@@ -39,7 +39,7 @@ public class Parser {
      * Supported user commands recognized by the parser.
      */
     public enum Command {
-        LIST, MARK, UNMARK, TODO, DEADLINE, EVENT, DELETE, FIND, BYE
+        LIST, MARK, UNMARK, TODO, DEADLINE, EVENT, DELETE, FIND, HELP, BYE
     }
 
     /**
@@ -92,6 +92,8 @@ public class Parser {
         case "event" -> new ParsedCommand(Command.EVENT, -1, parseEvent(trimmed), null);
 
         case "find" -> new ParsedCommand(Command.FIND, -1, null, parseFindKeyword(trimmed));
+
+        case "help" -> new ParsedCommand(Command.HELP, -1, null, null);
 
         default -> throw new IllegalArgumentException("Unknown command");
         };
