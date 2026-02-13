@@ -59,6 +59,8 @@ public class Mochi {
         this.tasks = storage.load();
         this.shouldExit = false;
 
+        assert this.tasks != null : "TaskList should never be null";
+
         String loadMsg = storage.getLastLoadMessage();
         this.startupMessage = (loadMsg == null)
                 ? ui.getWelcome()
@@ -96,6 +98,7 @@ public class Mochi {
         }
 
         String response = handleCommand(parsed);
+        assert response != null : "Response should never be null";
 
         if (shouldSave(parsed.command())) {
             try {
