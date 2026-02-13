@@ -188,45 +188,147 @@ public class Parser {
     /**
      * Parses an {@code event} command.
      *
+     * <p>Expected format:
+     * {@code event <description> /from <yyyy-MM-dd HHmm> /to <yyyy-MM-dd HHmm>}
+     *
      * @param input Full user input line.
      * @return An {@link Event} task.
+     * @throws IllegalArgumentException If required segments are missing, date/time cannot be parsed,
+     *                                  or {@code /to} is not after {@code /from}.
      */
     private static Task parseEvent(String input) {
-        String[] parts = input.split("event\\s+", 2);
-        if (parts.length < 2) {
-            throw new IllegalArgumentException("Event body missing");
-        }
+        String body = extractBody(input, "event", "Event body missing");
 
-        String[] first = parts[1].split("\\s*/from\\s*", 2);
+        String description = extractDescription(body);
+        String fromRaw = extractSegment(body, "/from", "/to", "Missing /from", "Missing /to");
+        String toRaw = extractAfter(body, "/to", "Missing /to");
+
+        validateEventFields(description, fromRaw, toRaw);
+
+        LocalDateTime fromDateTime = parseEventDateTime(fromRaw);
+        LocalDateTime toDateTime = parseEventDateTime(toRaw);
+
+        validateEventTimeRange(fromDateTime, toDateTime);
+
+        return new Event(description, fromDateTime, toDateTime);
+    }
+
+    /**
+     * Extracts the body after a given command keyword.
+     *
+     * @param input Full user input.
+     * @param command Keyword such as {@code "event"}.
+     * @param errorMessage Error message if the body is missing.
+     * @return Command body string (trimmed).
+     * @throws IllegalArgumentException If the body is missing.
+     */
+    private static String extractBody(String input, String command, String errorMessage) {
+        String[] parts = input.split(command + "\\s+", 2);
+        if (parts.length < 2 || parts[1].trim().isEmpty()) {
+            throw new IllegalArgumentException(errorMessage);
+        }
+        return parts[1].trim();
+    }
+
+    /**
+     * Extracts the event description (text before {@code /from}).
+     *
+     * @param body Event command body.
+     * @return Description string (trimmed, may be empty).
+     */
+    private static String extractDescription(String body) {
+        String[] parts = body.split("\\s*/from\\s*", 2);
+        return parts[0].trim();
+    }
+
+    /**
+     * Extracts the substring between two markers, validating that both exist.
+     *
+     * @param body Command body.
+     * @param startMarker Marker to start after (e.g. {@code "/from"}).
+     * @param endMarker Marker to stop before (e.g. {@code "/to"}).
+     * @param missingStartMessage Error message if {@code startMarker} is missing.
+     * @param missingEndMessage Error message if {@code endMarker} is missing.
+     * @return The trimmed substring between markers.
+     * @throws IllegalArgumentException If either marker is missing.
+     */
+    private static String extractSegment(
+            String body,
+            String startMarker,
+            String endMarker,
+            String missingStartMessage,
+            String missingEndMessage
+    ) {
+        String[] first = body.split("\\s*" + java.util.regex.Pattern.quote(startMarker) + "\\s*", 2);
         if (first.length < 2) {
-            throw new IllegalArgumentException("Missing /from");
+            throw new IllegalArgumentException(missingStartMessage);
         }
 
-        String[] second = first[1].split("\\s*/to\\s*", 2);
+        String[] second = first[1].split("\\s*" + java.util.regex.Pattern.quote(endMarker) + "\\s*", 2);
         if (second.length < 2) {
-            throw new IllegalArgumentException("Missing /to");
+            throw new IllegalArgumentException(missingEndMessage);
         }
 
-        String description = first[0].trim();
-        String fromRaw = second[0].trim();
-        String toRaw = second[1].trim();
+        return second[0].trim();
+    }
 
+    /**
+     * Extracts the substring after a marker.
+     *
+     * @param body Command body.
+     * @param marker Marker such as {@code "/to"}.
+     * @param missingMessage Error message if marker is missing or value is blank.
+     * @return The trimmed substring after the marker.
+     * @throws IllegalArgumentException If marker is missing or value is blank.
+     */
+    private static String extractAfter(String body, String marker, String missingMessage) {
+        String[] parts = body.split("\\s*" + java.util.regex.Pattern.quote(marker) + "\\s*", 2);
+        if (parts.length < 2 || parts[1].trim().isEmpty()) {
+            throw new IllegalArgumentException(missingMessage);
+        }
+        return parts[1].trim();
+    }
+
+    /**
+     * Validates that description, from, and to fields are all present.
+     *
+     * @param description Event description.
+     * @param fromRaw Raw {@code /from} text.
+     * @param toRaw Raw {@code /to} text.
+     * @throws IllegalArgumentException If any field is blank.
+     */
+    private static void validateEventFields(String description, String fromRaw, String toRaw) {
         if (description.isEmpty() || fromRaw.isEmpty() || toRaw.isEmpty()) {
             throw new IllegalArgumentException("Event description/from/to missing");
         }
+    }
 
+    /**
+     * Parses an event date-time using {@code EVENT_INPUT_FORMAT}.
+     *
+     * @param raw Date-time string in {@code yyyy-MM-dd HHmm}.
+     * @return Parsed {@link LocalDateTime}.
+     * @throws IllegalArgumentException If parsing fails.
+     */
+    private static LocalDateTime parseEventDateTime(String raw) {
         try {
-            LocalDateTime fromDateTime = LocalDateTime.parse(fromRaw, EVENT_INPUT_FORMAT);
-            LocalDateTime toDateTime = LocalDateTime.parse(toRaw, EVENT_INPUT_FORMAT);
-
-            if (!toDateTime.isAfter(fromDateTime)) {
-                throw new IllegalArgumentException("/to must be after /from");
-            }
-
-            return new Event(description, fromDateTime, toDateTime);
+            return LocalDateTime.parse(raw, EVENT_INPUT_FORMAT);
         } catch (DateTimeParseException e) {
             throw new IllegalArgumentException(
                     "Event date/time must be yyyy-MM-dd HHmm (e.g. 2026-01-30 1800)", e);
+        }
+    }
+
+    /**
+     * Validates that {@code to} is strictly after {@code from}.
+     *
+     * @param from Start date-time.
+     * @param to End date-time.
+     * @throws IllegalArgumentException If {@code to} is not after {@code from}.
+     */
+    private static void validateEventTimeRange(LocalDateTime from, LocalDateTime to) {
+        if (!to.isAfter(from)) {
+            throw new IllegalArgumentException("/to must be after /from");
         }
     }
 }
