@@ -76,6 +76,7 @@ public class DialogBox extends HBox {
      */
     public static DialogBox getMochiDialog(String text, Image img) {
         DialogBox db = new DialogBox(text, img);
+        db.setMochiStyle();
         db.flip();
         return db;
     }
@@ -93,6 +94,7 @@ public class DialogBox extends HBox {
                         + "-fx-text-fill: #8a0000;"
                         + "-fx-padding: 8 12 8 12;"
                         + "-fx-background-radius: 10;"
+                        + "-fx-font-family: 'Comic Sans MS'; -fx-font-size: 14px;"
         );
     }
 
@@ -176,6 +178,7 @@ public class DialogBox extends HBox {
                         + "-fx-text-fill: #4a1f2a;"
                         + "-fx-padding: 8 12 8 12;"
                         + "-fx-background-radius: 10;"
+                        + "-fx-font-family: 'Comic Sans MS'; -fx-font-size: 14px;"
         );
     }
 
@@ -190,6 +193,7 @@ public class DialogBox extends HBox {
                         + "-fx-text-fill: #222222;"
                         + "-fx-padding: 8 12 8 12;"
                         + "-fx-background-radius: 10;"
+                        + "-fx-font-family: 'Comic Sans MS'; -fx-font-size: 14px;"
         );
     }
 }

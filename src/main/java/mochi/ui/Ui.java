@@ -28,7 +28,7 @@ public class Ui {
      * @return Welcome message.
      */
     public String getWelcome() {
-        return "Hello! I'm Mochi.\nWhat can I do for you?";
+        return "Hello! I'm Mochi. Your cutest chatbot!\n(˶˃ ᵕ ˂˶)\nWhat can I do for you?";
     }
 
     /**
