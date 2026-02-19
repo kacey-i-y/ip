@@ -5,8 +5,10 @@ import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.control.TextField;
+import javafx.scene.control.TextArea;
 import javafx.scene.image.Image;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.VBox;
 import javafx.util.Duration;
 import mochi.Mochi;
@@ -23,7 +25,7 @@ public class MainWindow {
     private VBox dialogContainer;
 
     @FXML
-    private TextField userInput;
+    private TextArea userInput;
 
     @FXML
     private Button sendButton;
@@ -41,7 +43,6 @@ public class MainWindow {
     @FXML
     public void initialize() {
         scrollPane.setFitToWidth(true);
-        scrollPane.vvalueProperty().bind(dialogContainer.heightProperty());
 
         userInput.setStyle(
                 "-fx-background-color: #ffd1dc;"
@@ -52,7 +53,12 @@ public class MainWindow {
                         + "-fx-padding: 8;"
                         + "-fx-font-family: 'Comic Sans MS';"
                         + "-fx-font-size: 16px;"
+                        + "-fx-text-box-border: transparent;"
+                        + "-fx-padding: 6 10 6 10;"
+                        + "-fx-background-insets: 0;"
         );
+
+        userInput.setScrollTop(0);
 
         sendButton.setStyle(
                 "-fx-background-color: #ffb6c1;"
@@ -108,21 +114,15 @@ public class MainWindow {
 
         boolean isError = response != null && response.startsWith("Error:");
 
+        dialogContainer.getChildren().add(DialogBox.getUserDialog(input, userImage));
         dialogContainer.getChildren().add(
-                DialogBox.getUserDialog(input, userImage)
+                isError ? DialogBox.getErrorDialog(response, mochiImage)
+                        : DialogBox.getMochiDialog(response, mochiImage)
         );
 
-        if (isError) {
-            dialogContainer.getChildren().add(
-                    DialogBox.getErrorDialog(response, mochiImage)
-            );
-        } else {
-            dialogContainer.getChildren().add(
-                    DialogBox.getMochiDialog(response, mochiImage)
-            );
-        }
-
         userInput.clear();
+
+        Platform.runLater(() -> scrollPane.setVvalue(1.0));
 
         // Close the app if user typed "bye"
         if (mochi.shouldExit()) {
@@ -130,6 +130,22 @@ public class MainWindow {
             PauseTransition delay = new PauseTransition(Duration.millis(1200));
             delay.setOnFinished(e -> Platform.exit()); // cleanly terminates JavaFX app
             delay.play();
+        }
+    }
+
+    /**
+     * Handles key presses in the input box.
+     *
+     * <p>Pressing {@code Enter} sends the message (same as clicking Send).
+     * {@code Shift+Enter} is left untouched so the user can insert a newline.
+     *
+     * @param event The key event triggered by the user's key press.
+     */
+    @FXML
+    private void handleKeyPressed(KeyEvent event) {
+        if (event.getCode() == KeyCode.ENTER && !event.isShiftDown()) {
+            event.consume(); // stop TextArea adding a new line
+            handleUserInput();
         }
     }
 }
