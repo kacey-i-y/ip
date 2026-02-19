@@ -62,7 +62,9 @@ public class DialogBox extends HBox {
      * @return DialogBox instance.
      */
     public static DialogBox getUserDialog(String text, Image img) {
-        return new DialogBox(text, img);
+        DialogBox db = new DialogBox(text, img);
+        db.setUserStyle();
+        return db;
     }
 
     /**
@@ -161,5 +163,33 @@ public class DialogBox extends HBox {
         double y = (imgH - side) / 2.0;
 
         displayPicture.setViewport(new Rectangle2D(x, y, side, side));
+    }
+
+    /**
+     * Applies inline styling for user messages (right side).
+     *
+     * <p>Uses a brighter pink bubble with readable dark text.</p>
+     */
+    private void setUserStyle() {
+        dialog.setStyle(
+                "-fx-background-color: #ffb6c1;"
+                        + "-fx-text-fill: #4a1f2a;"
+                        + "-fx-padding: 8 12 8 12;"
+                        + "-fx-background-radius: 10;"
+        );
+    }
+
+    /**
+     * Applies inline styling for Mochi messages (left side).
+     *
+     * <p>Uses a softer neutral bubble to contrast user messages.</p>
+     */
+    private void setMochiStyle() {
+        dialog.setStyle(
+                "-fx-background-color: #f2f2f2;"
+                        + "-fx-text-fill: #222222;"
+                        + "-fx-padding: 8 12 8 12;"
+                        + "-fx-background-radius: 10;"
+        );
     }
 }
