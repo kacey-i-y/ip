@@ -179,6 +179,7 @@ public class DialogBox extends HBox {
                         + "-fx-padding: 8 12 8 12;"
                         + "-fx-background-radius: 10;"
                         + "-fx-font-family: 'Comic Sans MS'; -fx-font-size: 14px;"
+                        + "-fx-font-size: 16px;"
         );
     }
 

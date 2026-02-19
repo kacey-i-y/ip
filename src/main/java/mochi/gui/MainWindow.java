@@ -3,6 +3,7 @@ package mochi.gui;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
+import javafx.scene.control.Button;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
@@ -24,6 +25,9 @@ public class MainWindow {
     @FXML
     private TextField userInput;
 
+    @FXML
+    private Button sendButton;
+
     private Mochi mochi;
 
     private final Image userImage =
@@ -38,6 +42,25 @@ public class MainWindow {
     public void initialize() {
         scrollPane.setFitToWidth(true);
         scrollPane.vvalueProperty().bind(dialogContainer.heightProperty());
+
+        userInput.setStyle(
+                "-fx-background-color: #ffd1dc;"
+                        + "-fx-background-radius: 10;"
+                        + "-fx-border-radius: 10;"
+                        + "-fx-border-color: #f2a6b3;"
+                        + "-fx-border-width: 1;"
+                        + "-fx-padding: 8;"
+                        + "-fx-font-family: 'Comic Sans MS';"
+                        + "-fx-font-size: 16px;"
+        );
+
+        sendButton.setStyle(
+                "-fx-background-color: #ffb6c1;"
+                        + "-fx-background-radius: 10;"
+                        + "-fx-border-radius: 10;"
+                        + "-fx-border-color: #f2a6b3;"
+                        + "-fx-border-width: 1;"
+        );
 
         String pink = "#ffe6ee";
         scrollPane.setStyle("-fx-background: " + pink + "; -fx-background-color: " + pink + ";");
