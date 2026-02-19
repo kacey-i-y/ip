@@ -8,11 +8,13 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Pos;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
+import javafx.scene.shape.Circle;
 
 /**
  * Represents a dialog box consisting of an ImageView and a label containing text.
@@ -38,6 +40,8 @@ public class DialogBox extends HBox {
 
         dialog.setText(text);
         displayPicture.setImage(img);
+        centerCropToSquare(img);
+        makeDisplayPictureCircular();
     }
 
     /**
@@ -108,5 +112,54 @@ public class DialogBox extends HBox {
         db.setErrorStyle();
         db.flip(); // keep Mochi/error on the left like Mochi dialog
         return db;
+    }
+
+    /**
+     * Clips the {@code displayPicture} ImageView into a circular shape.
+     *
+     * <p>This creates a {@link Circle} clip based on the current {@code fitWidth} and
+     * {@code fitHeight}, so the visible portion of the image appears as a round avatar.
+     *
+     * <p>The clip is also updated when the ImageView's layout bounds change, keeping the
+     * circle centered and correctly sized if the ImageView is resized.
+     */
+    private void makeDisplayPictureCircular() {
+        displayPicture.setPreserveRatio(true);
+
+        double size = Math.min(displayPicture.getFitWidth(), displayPicture.getFitHeight());
+        if (size <= 0) {
+            size = 70;
+            displayPicture.setFitWidth(size);
+            displayPicture.setFitHeight(size);
+        }
+
+        Circle clip = new Circle(size / 2.0, size / 2.0, size / 2.0);
+        displayPicture.setClip(clip);
+
+        displayPicture.layoutBoundsProperty().addListener((obs, oldBounds, bounds) -> {
+            double s = Math.min(bounds.getWidth(), bounds.getHeight());
+            clip.setRadius(s / 2.0);
+            clip.setCenterX(bounds.getWidth() / 2.0);
+            clip.setCenterY(bounds.getHeight() / 2.0);
+        });
+    }
+
+    /**
+     * Crops the given image to a centered square region and applies it to {@code displayPicture}.
+     *
+     * <p>This helps keep the subject centered when we later clip the ImageView into a circle,
+     * especially if the original image is not 1:1 (e.g., wider or taller than it is wide).
+     *
+     * @param img The image currently shown by {@code displayPicture}.
+     */
+    private void centerCropToSquare(Image img) {
+        double imgW = img.getWidth();
+        double imgH = img.getHeight();
+        double side = Math.min(imgW, imgH);
+
+        double x = (imgW - side) / 2.0;
+        double y = (imgH - side) / 2.0;
+
+        displayPicture.setViewport(new Rectangle2D(x, y, side, side));
     }
 }
