@@ -36,6 +36,7 @@ public class MainWindow {
      */
     @FXML
     public void initialize() {
+        scrollPane.setFitToWidth(true);
         scrollPane.vvalueProperty().bind(dialogContainer.heightProperty());
     }
 

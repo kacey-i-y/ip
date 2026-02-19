@@ -26,7 +26,7 @@ public class Main extends Application {
             Scene scene = new Scene(ap);
             stage.setScene(scene);
             stage.setTitle("Mochi");
-            stage.setResizable(false);
+            stage.setResizable(true);
 
             MainWindow controller = fxmlLoader.getController();
             controller.setMochi(mochi);
