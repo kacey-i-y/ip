@@ -72,6 +72,16 @@ public class MainWindow {
                 viewport.setStyle("-fx-background-color: " + pink + ";");
             }
         });
+
+        scrollPane.viewportBoundsProperty().addListener((obs, oldBounds, newBounds) -> {
+            double viewportWidth = newBounds.getWidth();
+
+            double bubbleWidth = viewportWidth * 0.80;
+
+            bubbleWidth = Math.max(200, Math.min(bubbleWidth, 420));
+
+            DialogBox.setWrapWidth(bubbleWidth);
+        });
     }
 
     /**

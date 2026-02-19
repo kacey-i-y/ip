@@ -3,6 +3,8 @@ package mochi.gui;
 import java.io.IOException;
 import java.util.Collections;
 
+import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.SimpleDoubleProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -14,6 +16,8 @@ import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.shape.Circle;
 
 /**
@@ -26,6 +30,17 @@ public class DialogBox extends HBox {
 
     @FXML
     private ImageView displayPicture;
+
+    private static final DoubleProperty WRAP_WIDTH = new SimpleDoubleProperty(250);
+
+    /**
+     * Updates the max width used for wrapping text in all dialog bubbles.
+     *
+     * @param width New wrap width in pixels.
+     */
+    public static void setWrapWidth(double width) {
+        WRAP_WIDTH.set(width);
+    }
 
     private DialogBox(String text, Image img) {
         try {
@@ -42,6 +57,11 @@ public class DialogBox extends HBox {
         displayPicture.setImage(img);
         centerCropToSquare(img);
         makeDisplayPictureCircular();
+
+        dialog.setWrapText(true);
+        dialog.setMinHeight(Region.USE_PREF_SIZE);
+        dialog.maxWidthProperty().bind(WRAP_WIDTH);
+        dialog.setPrefWidth(Region.USE_COMPUTED_SIZE);
     }
 
     /**
