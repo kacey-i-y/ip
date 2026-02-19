@@ -38,6 +38,17 @@ public class MainWindow {
     public void initialize() {
         scrollPane.setFitToWidth(true);
         scrollPane.vvalueProperty().bind(dialogContainer.heightProperty());
+
+        String pink = "#ffe6ee";
+        scrollPane.setStyle("-fx-background: " + pink + "; -fx-background-color: " + pink + ";");
+        dialogContainer.setStyle("-fx-background-color: " + pink + ";");
+
+        javafx.application.Platform.runLater(() -> {
+            var viewport = scrollPane.lookup(".viewport");
+            if (viewport != null) {
+                viewport.setStyle("-fx-background-color: " + pink + ";");
+            }
+        });
     }
 
     /**
