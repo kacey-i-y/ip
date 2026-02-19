@@ -23,10 +23,12 @@ public class Main extends Application {
                     new FXMLLoader(Main.class.getResource("/view/MainWindow.fxml"));
             AnchorPane ap = fxmlLoader.load();
 
+            ap.setStyle("-fx-background-color: #ffe6ee;");
+
             Scene scene = new Scene(ap);
             stage.setScene(scene);
             stage.setTitle("Mochi");
-            stage.setResizable(false);
+            stage.setResizable(true);
 
             MainWindow controller = fxmlLoader.getController();
             controller.setMochi(mochi);
