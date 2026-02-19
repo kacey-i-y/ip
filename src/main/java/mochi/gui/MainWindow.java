@@ -68,14 +68,14 @@ public class MainWindow {
                         + "-fx-border-width: 1;"
         );
 
-        String pink = "#ffe6ee";
-        scrollPane.setStyle("-fx-background: " + pink + "; -fx-background-color: " + pink + ";");
-        dialogContainer.setStyle("-fx-background-color: " + pink + ";");
+        String bg = "#2B2B2B";
+        scrollPane.setStyle("-fx-background: " + bg + "; -fx-background-color: " + bg + ";");
+        dialogContainer.setStyle("-fx-background-color: " + bg + ";");
 
-        javafx.application.Platform.runLater(() -> {
+        Platform.runLater(() -> {
             var viewport = scrollPane.lookup(".viewport");
             if (viewport != null) {
-                viewport.setStyle("-fx-background-color: " + pink + ";");
+                viewport.setStyle("-fx-background-color: " + bg + ";");
             }
         });
 
