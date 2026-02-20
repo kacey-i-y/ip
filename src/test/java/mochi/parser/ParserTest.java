@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 
 import mochi.task.Deadline;
+import mochi.task.Event;
 import mochi.task.Todo;
 
 public class ParserTest {
@@ -32,19 +33,31 @@ public class ParserTest {
     }
 
     @Test
-    public void parse_eventEndBeforeStart_throwsIllegalArgumentException() {
+    public void parse_event_success() {
+        Parser.ParsedCommand cmd =
+                Parser.parse("event meet /from 2026-01-30 1800 /to 2026-01-30 1900");
+
+        assertEquals(Parser.Command.EVENT, cmd.command());
+        assertTrue(cmd.task() instanceof Event);
+        assertTrue(cmd.task().toWrite().contains("E |"));
+        assertTrue(cmd.task().toWrite().contains("2026-01-30 1800"));
+        assertTrue(cmd.task().toWrite().contains("2026-01-30 1900"));
+    }
+
+    @Test
+    public void parse_event_invalidTimeRange_throwsIllegalArgumentException() {
         assertThrows(IllegalArgumentException.class, () ->
                 Parser.parse("event meet /from 2026-01-30 1800 /to 2026-01-30 1700"));
     }
 
     @Test
-    public void parseMarkIndexZero_throwsIllegalArgumentException() {
+    public void parse_mark_invalidIndex_throwsIllegalArgumentException() {
         assertThrows(IllegalArgumentException.class, () ->
                 Parser.parse("mark 0"));
     }
 
     @Test
-    public void parse_unknownCommand_throws() {
+    public void parse_unknownCommand_throwsIllegalArgumentException() {
         assertThrows(IllegalArgumentException.class, () ->
                 Parser.parse("blah blah"));
     }
