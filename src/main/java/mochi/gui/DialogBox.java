@@ -42,6 +42,18 @@ public class DialogBox extends HBox {
         WRAP_WIDTH.set(width);
     }
 
+    /**
+     * Constructs a {@code DialogBox} with the given text and avatar image.
+     *
+     * <p>Loads the dialog UI from {@code DialogBox.fxml}, injects the FXML fields, then populates the
+     * label and image view. The avatar is center-cropped to a square and clipped into a circle.
+     *
+     * <p>The dialog label is also configured to wrap text based on {@code WRAP_WIDTH}, so long
+     * messages reflow properly when the window is resized.
+     *
+     * @param text The message to display in the dialog bubble.
+     * @param img  The avatar image to show beside the message.
+     */
     private DialogBox(String text, Image img) {
         try {
             FXMLLoader fxmlLoader =

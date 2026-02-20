@@ -252,6 +252,9 @@ public class Storage {
         }
     }
 
+    /**
+     * Returns the lastLoadMessage String
+     */
     public String getLastLoadMessage() {
         return lastLoadMessage;
     }
