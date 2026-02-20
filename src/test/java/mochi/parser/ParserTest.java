@@ -45,13 +45,13 @@ public class ParserTest {
     }
 
     @Test
-    public void parse_event_invalidTimeRange_throwsIllegalArgumentException() {
+    public void parseEventInvalidTimeRange_throwsIllegalArgumentException() {
         assertThrows(IllegalArgumentException.class, () ->
                 Parser.parse("event meet /from 2026-01-30 1800 /to 2026-01-30 1700"));
     }
 
     @Test
-    public void parse_mark_invalidIndex_throwsIllegalArgumentException() {
+    public void parseMarkInvalidIndex_throwsIllegalArgumentException() {
         assertThrows(IllegalArgumentException.class, () ->
                 Parser.parse("mark 0"));
     }
