@@ -1,6 +1,5 @@
 package mochi.task;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -10,6 +9,7 @@ import java.util.List;
  */
 public class TaskList {
 
+    /** Stores all tasks in insertion order. */
     private final List<Task> tasks;
 
     /**
@@ -99,117 +99,211 @@ public class TaskList {
     /**
      * Returns a formatted string of tasks grouped and sorted for display.
      *
-     * Deadlines: undone first (by date), then done (by date)
-     * Events: undone first (by end time), then done (by end time)
-     * Todos: undone first (alphabetical), then done (alphabetical)
+     * <p>Deadlines: undone first (by date), then done (by date).
+     * Events: undone first (by end time), then done (by end time).
+     * Todos: undone first (alphabetical), then done (alphabetical).
      *
      * @return Sorted and grouped task list as a string.
      */
     public String getSortedForDisplay() {
-        List<Deadline> deadlinesUndone = new ArrayList<>();
-        List<Deadline> deadlinesDone = new ArrayList<>();
-        List<Event> eventsUndone = new ArrayList<>();
-        List<Event> eventsDone = new ArrayList<>();
-        List<Todo> todosUndone = new ArrayList<>();
-        List<Todo> todosDone = new ArrayList<>();
+        SortedBuckets buckets = bucketTasks();
+        sortBuckets(buckets);
+        return formatBuckets(buckets).trim();
+    }
+
+    /**
+     * Groups tasks into typed buckets, split into undone and done.
+     *
+     * @return A {@link SortedBuckets} object containing grouped tasks.
+     */
+    private SortedBuckets bucketTasks() {
+        SortedBuckets buckets = new SortedBuckets();
 
         for (Task t : tasks) {
-            if (t instanceof Deadline d) {
-                if (d.isDone()) {
-                    deadlinesDone.add(d);
-                } else {
-                    deadlinesUndone.add(d);
-                }
-            } else if (t instanceof Event e) {
-                if (e.isDone()) {
-                    eventsDone.add(e);
-                } else {
-                    eventsUndone.add(e);
-                }
-            } else if (t instanceof Todo td) {
-                if (td.isDone()) {
-                    todosDone.add(td);
-                } else {
-                    todosUndone.add(td);
-                }
-            }
+            buckets.add(t);
         }
 
-        deadlinesUndone.sort(Comparator.comparing(Deadline::getBy));
-        deadlinesDone.sort(Comparator.comparing(Deadline::getBy));
+        return buckets;
+    }
 
-        eventsUndone.sort(Comparator.comparing(Event::getTo));
-        eventsDone.sort(Comparator.comparing(Event::getTo));
+    /**
+     * Sorts each bucket according to the display rules.
+     *
+     * @param buckets Buckets to sort.
+     */
+    private void sortBuckets(SortedBuckets buckets) {
+        buckets.sortDeadlines();
+        buckets.sortEvents();
+        buckets.sortTodos();
+    }
 
-        Comparator<Todo> todoAlpha =
-                Comparator.comparing(x -> x.getDescription().toLowerCase());
-        todosUndone.sort(todoAlpha);
-        todosDone.sort(todoAlpha);
-
+    /**
+     * Formats all buckets into the final user-facing string.
+     *
+     * @param buckets Buckets to format.
+     * @return A formatted string for display.
+     */
+    private String formatBuckets(SortedBuckets buckets) {
         StringBuilder sb = new StringBuilder();
         sb.append("Great! Here is a sorted list of your tasks\n\n");
 
         sb.append("Deadlines:\n");
-        appendSection(sb, deadlinesUndone, deadlinesDone);
+        appendSection(sb, buckets.deadlinesUndone, buckets.deadlinesDone);
 
         sb.append("\nEvents:\n");
-        appendSection(sb, eventsUndone, eventsDone);
+        appendSection(sb, buckets.eventsUndone, buckets.eventsDone);
 
         sb.append("\nTodos:\n");
-        appendSection(sb, todosUndone, todosDone);
+        appendSection(sb, buckets.todosUndone, buckets.todosDone);
 
-        return sb.toString().trim();
+        return sb.toString();
     }
 
     /**
      * Appends undone tasks first, then done tasks, in numbered order.
      *
-     * @param sb Output builder.
+     * @param sb     Output builder.
      * @param undone Undone tasks (already sorted).
-     * @param done Done tasks (already sorted).
+     * @param done   Done tasks (already sorted).
      */
-    private static void appendSection(StringBuilder sb, List<? extends Task> undone,
-                                      List<? extends Task> done) {
+    private static void appendSection(
+            StringBuilder sb,
+            List<? extends Task> undone,
+            List<? extends Task> done
+    ) {
         if (undone.isEmpty() && done.isEmpty()) {
             sb.append("  (none)\n");
             return;
         }
 
         int i = 1;
-        for (Task t : undone) {
-            sb.append(i++).append(". ").append(t).append("\n");
-        }
-        for (Task t : done) {
-            sb.append(i++).append(". ").append(t).append("\n");
-        }
+        i = appendTasks(sb, undone, i);
+        appendTasks(sb, done, i);
     }
 
     /**
-     * Returns true if an event has ended (its end time is <= now).
+     * Appends each task to the StringBuilder in numbered format.
      *
-     * @param e Event to check.
-     * @param now Current time.
-     * @return True if ended, false otherwise.
+     * @param sb    Output builder.
+     * @param tasks Tasks to append.
+     * @param start Starting number to use.
+     * @return Next number after the last appended task.
      */
-
-    private static boolean hasEnded(Event e, LocalDateTime now) {
-        return !e.getTo().isAfter(now); // ended if to <= now
+    private static int appendTasks(StringBuilder sb, List<? extends Task> tasks, int start) {
+        int i = start;
+        for (Task t : tasks) {
+            sb.append(i++).append(". ").append(t).append("\n");
+        }
+        return i;
     }
 
     /**
-     * Appends tasks as a 1-based numbered list using each task's toString().
-     *
-     * @param sb StringBuilder to append to.
-     * @param list Tasks to print.
+     * Container object holding grouped task lists for sorting and display.
      */
-    private static void appendNumberedList(StringBuilder sb, List<? extends Task> list) {
-        if (list.isEmpty()) {
-            sb.append("No tasks.\n");
-            return;
+    private static class SortedBuckets {
+
+        /** Undone deadline tasks. */
+        private final List<Deadline> deadlinesUndone = new ArrayList<>();
+
+        /** Done deadline tasks. */
+        private final List<Deadline> deadlinesDone = new ArrayList<>();
+
+        /** Undone event tasks. */
+        private final List<Event> eventsUndone = new ArrayList<>();
+
+        /** Done event tasks. */
+        private final List<Event> eventsDone = new ArrayList<>();
+
+        /** Undone todo tasks. */
+        private final List<Todo> todosUndone = new ArrayList<>();
+
+        /** Done todo tasks. */
+        private final List<Todo> todosDone = new ArrayList<>();
+
+        /**
+         * Adds a task to the correct bucket based on its type and done status.
+         *
+         * @param task Task to bucket.
+         */
+        private void add(Task task) {
+            if (task instanceof Deadline d) {
+                addDeadline(d);
+                return;
+            }
+
+            if (task instanceof Event e) {
+                addEvent(e);
+                return;
+            }
+
+            if (task instanceof Todo td) {
+                addTodo(td);
+            }
         }
 
-        for (int i = 0; i < list.size(); i++) {
-            sb.append(i + 1).append(". ").append(list.get(i)).append("\n");
+        /**
+         * Adds a deadline task into either the done or undone list.
+         *
+         * @param d Deadline to add.
+         */
+        private void addDeadline(Deadline d) {
+            if (d.isDone()) {
+                deadlinesDone.add(d);
+            } else {
+                deadlinesUndone.add(d);
+            }
+        }
+
+        /**
+         * Adds an event task into either the done or undone list.
+         *
+         * @param e Event to add.
+         */
+        private void addEvent(Event e) {
+            if (e.isDone()) {
+                eventsDone.add(e);
+            } else {
+                eventsUndone.add(e);
+            }
+        }
+
+        /**
+         * Adds a todo task into either the done or undone list.
+         *
+         * @param td Todo to add.
+         */
+        private void addTodo(Todo td) {
+            if (td.isDone()) {
+                todosDone.add(td);
+            } else {
+                todosUndone.add(td);
+            }
+        }
+
+        /**
+         * Sorts deadline buckets by deadline date.
+         */
+        private void sortDeadlines() {
+            deadlinesUndone.sort(Comparator.comparing(Deadline::getBy));
+            deadlinesDone.sort(Comparator.comparing(Deadline::getBy));
+        }
+
+        /**
+         * Sorts event buckets by end time.
+         */
+        private void sortEvents() {
+            eventsUndone.sort(Comparator.comparing(Event::getTo));
+            eventsDone.sort(Comparator.comparing(Event::getTo));
+        }
+
+        /**
+         * Sorts todo buckets alphabetically (case-insensitive).
+         */
+        private void sortTodos() {
+            Comparator<Todo> todoAlpha =
+                    Comparator.comparing(x -> x.getDescription().toLowerCase());
+            todosUndone.sort(todoAlpha);
+            todosDone.sort(todoAlpha);
         }
     }
 }
