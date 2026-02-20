@@ -165,17 +165,6 @@ public class Ui {
     }
 
     /**
-     * Returns a message when tasks.txt file is not found
-     *
-     * @return Message string.
-     */
-    public String getMissingDataFileMessage(String path) {
-        return "I couldn't find " + path + ".\n"
-                + "Starting with an empty task list.\n"
-                + "I'll create the file automatically when you save tasks.";
-    }
-
-    /**
      * Returns a sorted, grouped view of the task list for display.
      *
      * @param tasks Task list to sort and format.
