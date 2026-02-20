@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -47,5 +48,30 @@ public class StorageTest {
 
         TaskList loaded = storage.load();
         assertTrue(loaded.isEmpty());
+    }
+
+    @Test
+    public void loadCorruptedLines_skipsCorrupted_keepsValid() throws IOException {
+        Storage storage = new Storage(tempDir.toString(), "tasks.txt");
+
+        Path savePath = tempDir.resolve("tasks.txt");
+        Files.writeString(savePath,
+                // valid todo
+                "T | 0 | read\n"
+                        // corrupted (too few fields)
+                        + "D | 1\n"
+                        // valid deadline
+                        + "D | 1 | submit | 2026-01-30\n"
+                        // corrupted (bad date)
+                        + "D | 0 | oops | 2026-99-99\n"
+                        // valid event
+                        + "E | 0 | meet | 2026-01-30 1800 | 2026-01-30 1900\n"
+        );
+
+        TaskList loaded = storage.load();
+        assertEquals(3, loaded.size());
+        assertTrue(loaded.get(0).toWrite().contains("T |"));
+        assertTrue(loaded.get(1).toWrite().contains("D |"));
+        assertTrue(loaded.get(2).toWrite().contains("E |"));
     }
 }
