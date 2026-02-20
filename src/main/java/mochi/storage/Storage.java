@@ -21,12 +21,18 @@ import mochi.task.Todo;
  * Handles loading tasks from disk and saving tasks to disk.
  */
 public class Storage {
+
+    /** Regex used to split saved lines by '|' with optional surrounding whitespace. */
     private static final String PIPE_SPLIT_REGEX = "\\s*\\|\\s*";
+
+    /** Date-time format used when persisting event times. */
     private static final DateTimeFormatter EVENT_SAVE_FORMAT =
             DateTimeFormatter.ofPattern("yyyy-MM-dd HHmm");
 
+    /** Save file location. */
     private final File saveFile;
 
+    /** Message describing the last load status (null if load succeeded with no message). */
     private String lastLoadMessage;
 
     /**
@@ -40,38 +46,22 @@ public class Storage {
     }
 
     /**
-     * Loads tasks from disk. If the file does not exist, returns a message and an empty TaskList.
+     * Loads tasks from disk.
+     *
+     * <p>If the file does not exist, returns an empty list and sets a user-facing message.
+     * If reading fails, returns an empty list and sets a user-facing message.
      * Corrupted lines are skipped.
      *
-     * @return TaskList loaded from disk.
+     * @return TaskList loaded from disk (possibly empty).
      */
     public TaskList load() {
-        TaskList tasks = new TaskList();
-        lastLoadMessage = null; // reset for this load attempt
+        resetLastLoadMessage();
 
         if (!saveFile.exists()) {
-            lastLoadMessage = "I can't find " + saveFile.getPath()
-                    + ". Starting with an empty task list.";
-            return tasks;
+            return emptyWithMessage(missingFileMessage());
         }
 
-        try (BufferedReader reader = new BufferedReader(new FileReader(saveFile))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                try {
-                    Task task = parseLine(line);
-                    tasks.add(task);
-                } catch (IllegalArgumentException e) {
-                    // corrupted line: skip
-                }
-            }
-        } catch (IOException e) {
-            lastLoadMessage = "I couldn't read " + saveFile.getPath()
-                    + ". Starting with an empty task list.";
-            return new TaskList();
-        }
-
-        return tasks;
+        return readTasksFromFile();
     }
 
     /**
@@ -83,16 +73,64 @@ public class Storage {
      */
     public void save(TaskList tasks) throws IOException {
         assert tasks != null : "Cannot save a null TaskList";
-        File dir = saveFile.getParentFile();
-        if (dir != null && !dir.exists()) {
-            dir.mkdirs();
-        }
+
+        ensureParentDirectoryExists();
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(saveFile))) {
-            for (int i = 0; i < tasks.size(); i++) {
-                writer.write(tasks.get(i).toWrite());
-                writer.newLine();
+            writeAllTasks(tasks, writer);
+        }
+    }
+
+    /**
+     * Returns the status message recorded during the last load attempt.
+     *
+     * @return Message string if a load warning/error occurred; {@code null} otherwise.
+     */
+    public String getLastLoadMessage() {
+        return lastLoadMessage;
+    }
+
+    /**
+     * Resets the recorded load message for a new load attempt.
+     */
+    private void resetLastLoadMessage() {
+        lastLoadMessage = null;
+    }
+
+    /**
+     * Reads tasks from the save file and returns them as a TaskList.
+     *
+     * <p>Corrupted lines are skipped. If an IOException occurs, returns an empty list and
+     * sets {@link #lastLoadMessage}.
+     *
+     * @return TaskList read from file (possibly empty).
+     */
+    private TaskList readTasksFromFile() {
+        TaskList tasks = new TaskList();
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(saveFile))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                addIfParsable(tasks, line);
             }
+        } catch (IOException e) {
+            return emptyWithMessage(unreadableFileMessage());
+        }
+
+        return tasks;
+    }
+
+    /**
+     * Attempts to parse a saved line and add it to the task list.
+     *
+     * @param tasks Task list to add into.
+     * @param line Raw line from save file.
+     */
+    private void addIfParsable(TaskList tasks, String line) {
+        try {
+            tasks.add(parseLine(line));
+        } catch (IllegalArgumentException e) {
+            // corrupted line: skip
         }
     }
 
@@ -111,25 +149,69 @@ public class Storage {
      * @throws IllegalArgumentException If the line is malformed.
      */
     private Task parseLine(String line) {
-        String[] parts = line.split(PIPE_SPLIT_REGEX);
-        if (parts.length < 3) {
-            throw new IllegalArgumentException("Too few fields");
-        }
+        String[] parts = splitLine(line);
 
-        String type = parts[0].trim().toUpperCase();
-        String done = parts[1].trim();
+        String type = parseType(parts);
+        String done = parseDoneFlag(parts);
 
         Task task = parseTask(parts, type);
-
-        if ("1".equals(done)) {
-            task.mark();
-        } else if ("0".equals(done)) {
-            task.unmark();
-        } else {
-            throw new IllegalArgumentException("Bad done flag");
-        }
+        applyDoneFlag(task, done);
 
         return task;
+    }
+
+    /**
+     * Splits a save-file line into fields.
+     *
+     * @param line Save file line.
+     * @return Array of split fields.
+     * @throws IllegalArgumentException If the line has too few fields.
+     */
+    private static String[] splitLine(String line) {
+        String[] parts = line.split(PIPE_SPLIT_REGEX);
+        requireMinFields(parts, 3, "Too few fields");
+        return parts;
+    }
+
+    /**
+     * Extracts and normalizes the task type token from a saved line.
+     *
+     * @param parts Split fields from the save file line.
+     * @return Uppercased task type token.
+     */
+    private static String parseType(String[] parts) {
+        return parts[0].trim().toUpperCase();
+    }
+
+    /**
+     * Extracts the done flag token from a saved line.
+     *
+     * @param parts Split fields from the save file line.
+     * @return Raw done flag string ("0" or "1").
+     */
+    private static String parseDoneFlag(String[] parts) {
+        return parts[1].trim();
+    }
+
+    /**
+     * Applies the done flag ("0" or "1") to the given task.
+     *
+     * @param task Task to update.
+     * @param done Done flag string.
+     * @throws IllegalArgumentException If the done flag is not "0" or "1".
+     */
+    private static void applyDoneFlag(Task task, String done) {
+        if ("1".equals(done)) {
+            task.mark();
+            return;
+        }
+
+        if ("0".equals(done)) {
+            task.unmark();
+            return;
+        }
+
+        throw new IllegalArgumentException("Bad done flag");
     }
 
     /**
@@ -173,6 +255,7 @@ public class Storage {
 
         String description = parts[2].trim();
         LocalDate byDate = parseLocalDate(parts[3].trim());
+
         return new Deadline(description, byDate);
     }
 
@@ -253,9 +336,57 @@ public class Storage {
     }
 
     /**
-     * Returns the lastLoadMessage String
+     * Ensures the save file's parent directory exists if a parent directory is present.
      */
-    public String getLastLoadMessage() {
-        return lastLoadMessage;
+    private void ensureParentDirectoryExists() {
+        File dir = saveFile.getParentFile();
+        if (dir != null && !dir.exists()) {
+            dir.mkdirs();
+        }
+    }
+
+    /**
+     * Writes all tasks in the list to the given writer, one task per line.
+     *
+     * @param tasks Task list to write.
+     * @param writer Writer to output to.
+     * @throws IOException If writing fails.
+     */
+    private static void writeAllTasks(TaskList tasks, BufferedWriter writer) throws IOException {
+        for (int i = 0; i < tasks.size(); i++) {
+            writer.write(tasks.get(i).toWrite());
+            writer.newLine();
+        }
+    }
+
+    /**
+     * Returns an empty task list and records the provided load message.
+     *
+     * @param message Load status message.
+     * @return A new empty TaskList.
+     */
+    private TaskList emptyWithMessage(String message) {
+        lastLoadMessage = message;
+        return new TaskList();
+    }
+
+    /**
+     * Builds the user-facing message for a missing save file.
+     *
+     * @return Missing file message.
+     */
+    private String missingFileMessage() {
+        return "I can't find " + saveFile.getPath()
+                + ". Starting with an empty task list.";
+    }
+
+    /**
+     * Builds the user-facing message for an unreadable save file.
+     *
+     * @return Unreadable file message.
+     */
+    private String unreadableFileMessage() {
+        return "I couldn't read " + saveFile.getPath()
+                + ". Starting with an empty task list.";
     }
 }
