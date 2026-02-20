@@ -16,7 +16,6 @@ import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.shape.Circle;
 
@@ -25,13 +24,13 @@ import javafx.scene.shape.Circle;
  */
 public class DialogBox extends HBox {
 
+    private static final DoubleProperty WRAP_WIDTH = new SimpleDoubleProperty(250);
+
     @FXML
     private Label dialog;
 
     @FXML
     private ImageView displayPicture;
-
-    private static final DoubleProperty WRAP_WIDTH = new SimpleDoubleProperty(250);
 
     /**
      * Updates the max width used for wrapping text in all dialog bubbles.
@@ -45,10 +44,11 @@ public class DialogBox extends HBox {
     /**
      * Constructs a {@code DialogBox} with the given text and avatar image.
      *
-     * <p>Loads the dialog UI from {@code DialogBox.fxml}, injects the FXML fields, then populates the
-     * label and image view. The avatar is center-cropped to a square and clipped into a circle.
+     * <p>Loads the dialog UI from {@code DialogBox.fxml}, injects the FXML fields, then
+     * populates the label and image view. The avatar is center-cropped to a square and
+     * clipped into a circle.
      *
-     * <p>The dialog label is also configured to wrap text based on {@code WRAP_WIDTH}, so long
+     * <p>The dialog label is configured to wrap text based on {@code WRAP_WIDTH}, so long
      * messages reflow properly when the window is resized.
      *
      * @param text The message to display in the dialog bubble.
@@ -116,9 +116,9 @@ public class DialogBox extends HBox {
     /**
      * Applies inline styling to visually highlight this dialog as an error message.
      *
-     * <p>The style uses a light red background and darker red text to make errors
-     * stand out from normal replies. This method is intended to be called after
-     * the FXML has been loaded and {@code dialog} has been injected.
+     * <p>The style uses a light red background and darker red text to make errors stand
+     * out from normal replies. This method is intended to be called after the FXML has
+     * been loaded and {@code dialog} has been injected.
      */
     private void setErrorStyle() {
         dialog.setStyle(
@@ -144,7 +144,7 @@ public class DialogBox extends HBox {
      * @return A {@code DialogBox} styled and positioned as an error dialog.
      */
     public static DialogBox getErrorDialog(String text, Image img) {
-        var db = new DialogBox(text, img);
+        DialogBox db = new DialogBox(text, img);
         db.setErrorStyle();
         db.flip(); // keep Mochi/error on the left like Mochi dialog
         return db;
@@ -156,7 +156,7 @@ public class DialogBox extends HBox {
      * <p>This creates a {@link Circle} clip based on the current {@code fitWidth} and
      * {@code fitHeight}, so the visible portion of the image appears as a round avatar.
      *
-     * <p>The clip is also updated when the ImageView's layout bounds change, keeping the
+     * <p>The clip is updated when the ImageView's layout bounds change, keeping the
      * circle centered and correctly sized if the ImageView is resized.
      */
     private void makeDisplayPictureCircular() {

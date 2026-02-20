@@ -10,12 +10,26 @@ import javafx.stage.Stage;
 import mochi.Mochi;
 
 /**
- * A GUI for Mochi using FXML.
+ * Launches Mochi's JavaFX GUI application.
+ *
+ * <p>This class is the JavaFX entry point. It loads {@code MainWindow.fxml}, creates the
+ * main scene, configures the primary stage, and injects a {@link Mochi} instance into
+ * the {@link MainWindow} controller so the GUI can delegate command handling to the
+ * core application logic.
  */
 public class Main extends Application {
 
     private final Mochi mochi = new Mochi();
 
+    /**
+     * Starts the JavaFX application and displays the main window.
+     *
+     * <p>Loads the UI layout from {@code /view/MainWindow.fxml}, applies window styling,
+     * sets up the {@link Stage}, and wires the GUI controller to the core {@link Mochi}
+     * instance.
+     *
+     * @param stage The primary stage provided by the JavaFX runtime.
+     */
     @Override
     public void start(Stage stage) {
         try {
