@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.regex.Pattern;
 
 import mochi.task.Deadline;
 import mochi.task.Event;
@@ -14,13 +15,7 @@ import mochi.task.Todo;
  * Parses user input into structured commands for Mochi.
  *
  * <p>This class converts raw CLI strings (e.g. {@code "deadline read book /by 2026-01-30"})
- * into a {@link ParsedCommand} object that contains:
- * <ul>
- *   <li>a {@link Command} type</li>
- *   <li>an optional 0-based index for commands like mark/unmark/delete</li>
- *   <li>an optional {@link Task} object for commands that create tasks</li>
- *   <li>an optional keyword for {@code find}</li>
- * </ul>
+ * into a {@link ParsedCommand} object.
  */
 public class Parser {
 
@@ -28,29 +23,18 @@ public class Parser {
     private static final DateTimeFormatter EVENT_INPUT_FORMAT =
             DateTimeFormatter.ofPattern("yyyy-MM-dd HHmm");
 
-    /**
-     * Prevents instantiation of this utility class.
-     */
+    /** Prevents instantiation of this utility class. */
     private Parser() {
         // Utility class: prevent instantiation.
     }
 
-    /**
-     * Supported user commands recognized by the parser.
-     */
+    /** Supported user commands recognized by the parser. */
     public enum Command {
         LIST, SORT, MARK, UNMARK, TODO, DEADLINE, EVENT, DELETE, FIND, HELP, BYE
     }
 
     /**
      * Represents a parsed command produced from user input.
-     *
-     * <p>Conventions:
-     * <ul>
-     *   <li>{@code index} is 0-based when used; otherwise {@code -1}</li>
-     *   <li>{@code task} is non-null only for TODO/DEADLINE/EVENT; otherwise {@code null}</li>
-     *   <li>{@code keyword} is non-null only for FIND; otherwise {@code null}</li>
-     * </ul>
      *
      * @param command Parsed command type (never null).
      * @param index   0-based index for index-based commands, or -1 if not applicable.
@@ -68,15 +52,7 @@ public class Parser {
      * @throws IllegalArgumentException If the input is empty, malformed, or unknown.
      */
     public static ParsedCommand parse(String input) {
-        if (input == null) {
-            throw new IllegalArgumentException("Input is null");
-        }
-
-        String trimmed = input.trim();
-        if (trimmed.isEmpty()) {
-            throw new IllegalArgumentException("Input is empty");
-        }
-
+        String trimmed = requireNonBlank(input, "Input is empty");
         String firstToken = trimmed.split("\\s+")[0].toLowerCase();
 
         return switch (firstToken) {
@@ -93,11 +69,29 @@ public class Parser {
         case "event" -> new ParsedCommand(Command.EVENT, -1, parseEvent(trimmed), null);
 
         case "find" -> new ParsedCommand(Command.FIND, -1, null, parseFindKeyword(trimmed));
-
         case "help" -> new ParsedCommand(Command.HELP, -1, null, null);
 
         default -> throw new IllegalArgumentException("Unknown command");
         };
+    }
+
+    /**
+     * Ensures the input is non-null and non-blank.
+     *
+     * @param value Raw string.
+     * @param message Error message if invalid.
+     * @return Trimmed non-blank string.
+     * @throws IllegalArgumentException If null or blank.
+     */
+    private static String requireNonBlank(String value, String message) {
+        if (value == null) {
+            throw new IllegalArgumentException("Input is null");
+        }
+        String trimmed = value.trim();
+        if (trimmed.isEmpty()) {
+            throw new IllegalArgumentException(message);
+        }
+        return trimmed;
     }
 
     /**
@@ -108,20 +102,32 @@ public class Parser {
      * @throws IllegalArgumentException If index is missing, not a number, or <= 0.
      */
     private static int parseIndex(String input) {
+        String[] parts = input.split("\\s+");
+        if (parts.length != 2) {
+            throw new IllegalArgumentException("Invalid format");
+        }
+
+        int oneBased = parsePositiveInt(parts[1], "Index must be a number");
+        if (oneBased <= 0) {
+            throw new IllegalArgumentException("Index must be >= 1");
+        }
+
+        return oneBased - 1;
+    }
+
+    /**
+     * Parses a positive integer from a string.
+     *
+     * @param raw Raw number string.
+     * @param errorMessage Error message if parsing fails.
+     * @return Parsed integer.
+     * @throws IllegalArgumentException If not a valid integer.
+     */
+    private static int parsePositiveInt(String raw, String errorMessage) {
         try {
-            String[] parts = input.split("\\s+");
-            if (parts.length != 2) {
-                throw new IllegalArgumentException("Invalid format");
-            }
-
-            int oneBased = Integer.parseInt(parts[1]);
-            if (oneBased <= 0) {
-                throw new IllegalArgumentException("Index must be >= 1");
-            }
-
-            return oneBased - 1;
+            return Integer.parseInt(raw);
         } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("Index must be a number", e);
+            throw new IllegalArgumentException(errorMessage, e);
         }
     }
 
@@ -130,13 +136,10 @@ public class Parser {
      *
      * @param input Full user input line.
      * @return Keyword string.
+     * @throws IllegalArgumentException If the keyword is missing.
      */
     private static String parseFindKeyword(String input) {
-        String[] parts = input.split("find\\s+", 2);
-        if (parts.length < 2 || parts[1].trim().isEmpty()) {
-            throw new IllegalArgumentException("Find keyword missing");
-        }
-        return parts[1].trim();
+        return extractBody(input, "find", "Find keyword missing");
     }
 
     /**
@@ -146,12 +149,8 @@ public class Parser {
      * @return A {@link Todo} task.
      */
     private static Task parseTodo(String input) {
-        String[] parts = input.split("todo\\s+", 2);
-        if (parts.length < 2 || parts[1].trim().isEmpty()) {
-            throw new IllegalArgumentException("Todo description missing");
-        }
-
-        return new Todo(parts[1].trim());
+        String description = extractBody(input, "todo", "Todo description missing");
+        return new Todo(description);
     }
 
     /**
@@ -161,57 +160,61 @@ public class Parser {
      * @return A {@link Deadline} task.
      */
     private static Task parseDeadline(String input) {
-        String[] parts = input.split("deadline\\s+", 2);
-        if (parts.length < 2) {
-            throw new IllegalArgumentException("Deadline body missing");
-        }
+        String body = extractBody(input, "deadline", "Deadline body missing");
 
-        String[] bodyParts = parts[1].split("\\s*/by\\s*", 2);
-        if (bodyParts.length < 2) {
-            throw new IllegalArgumentException("Missing /by");
-        }
+        String description = extractBefore(body, "/by", "Missing /by").trim();
+        String byRaw = extractAfter(body, "/by", "Missing /by").trim();
 
-        String description = bodyParts[0].trim();
-        String byRaw = bodyParts[1].trim();
+        requireNonBlank(description, "Deadline description/date missing");
+        requireNonBlank(byRaw, "Deadline description/date missing");
 
-        if (description.isEmpty() || byRaw.isEmpty()) {
-            throw new IllegalArgumentException("Deadline description/date missing");
-        }
-
-        try {
-            LocalDate byDate = LocalDate.parse(byRaw); // yyyy-MM-dd
-            return new Deadline(description, byDate);
-        } catch (DateTimeParseException e) {
-            throw new IllegalArgumentException("Deadline date must be yyyy-MM-dd", e);
-        }
+        LocalDate byDate = parseDate(byRaw);
+        return new Deadline(description, byDate);
     }
 
     /**
      * Parses an {@code event} command.
      *
-     * <p>Expected format:
-     * {@code event <description> /from <yyyy-MM-dd HHmm> /to <yyyy-MM-dd HHmm>}
-     *
      * @param input Full user input line.
      * @return An {@link Event} task.
-     * @throws IllegalArgumentException If required segments are missing, date/time cannot be parsed,
-     *                                  or {@code /to} is not after {@code /from}.
      */
     private static Task parseEvent(String input) {
+        EventFields fields = parseEventFields(input);
+        LocalDateTime from = parseEventDateTime(fields.fromRaw());
+        LocalDateTime to = parseEventDateTime(fields.toRaw());
+        validateEventTimeRange(from, to);
+        return new Event(fields.description(), from, to);
+    }
+
+    /**
+     * Parses and validates the raw pieces required to construct an event.
+     *
+     * @param input Full user input line.
+     * @return Parsed event fields (description, from, to).
+     * @throws IllegalArgumentException If required segments are missing.
+     */
+    private static EventFields parseEventFields(String input) {
         String body = extractBody(input, "event", "Event body missing");
 
-        String description = extractDescription(body);
-        String fromRaw = extractSegment(body, "/from", "/to", "Missing /from", "Missing /to");
-        String toRaw = extractAfter(body, "/to", "Missing /to");
+        String description = extractBefore(body, "/from", "Missing /from").trim();
+        String fromRaw = extractBetween(body, "/from", "/to", "Missing /from", "Missing /to").trim();
+        String toRaw = extractAfter(body, "/to", "Missing /to").trim();
 
-        validateEventFields(description, fromRaw, toRaw);
+        requireNonBlank(description, "Event description/from/to missing");
+        requireNonBlank(fromRaw, "Event description/from/to missing");
+        requireNonBlank(toRaw, "Event description/from/to missing");
 
-        LocalDateTime fromDateTime = parseEventDateTime(fromRaw);
-        LocalDateTime toDateTime = parseEventDateTime(toRaw);
+        return new EventFields(description, fromRaw, toRaw);
+    }
 
-        validateEventTimeRange(fromDateTime, toDateTime);
-
-        return new Event(description, fromDateTime, toDateTime);
+    /**
+     * Container for raw event inputs extracted from the command.
+     *
+     * @param description Event description.
+     * @param fromRaw Raw {@code /from} value.
+     * @param toRaw Raw {@code /to} value.
+     */
+    private record EventFields(String description, String fromRaw, String toRaw) {
     }
 
     /**
@@ -232,45 +235,20 @@ public class Parser {
     }
 
     /**
-     * Extracts the event description (text before {@code /from}).
-     *
-     * @param body Event command body.
-     * @return Description string (trimmed, may be empty).
-     */
-    private static String extractDescription(String body) {
-        String[] parts = body.split("\\s*/from\\s*", 2);
-        return parts[0].trim();
-    }
-
-    /**
-     * Extracts the substring between two markers, validating that both exist.
+     * Extracts the substring before a marker.
      *
      * @param body Command body.
-     * @param startMarker Marker to start after (e.g. {@code "/from"}).
-     * @param endMarker Marker to stop before (e.g. {@code "/to"}).
-     * @param missingStartMessage Error message if {@code startMarker} is missing.
-     * @param missingEndMessage Error message if {@code endMarker} is missing.
-     * @return The trimmed substring between markers.
-     * @throws IllegalArgumentException If either marker is missing.
+     * @param marker Marker such as {@code "/from"}.
+     * @param missingMessage Error message if marker is missing.
+     * @return Substring before the marker.
+     * @throws IllegalArgumentException If marker is missing.
      */
-    private static String extractSegment(
-            String body,
-            String startMarker,
-            String endMarker,
-            String missingStartMessage,
-            String missingEndMessage
-    ) {
-        String[] first = body.split("\\s*" + java.util.regex.Pattern.quote(startMarker) + "\\s*", 2);
-        if (first.length < 2) {
-            throw new IllegalArgumentException(missingStartMessage);
+    private static String extractBefore(String body, String marker, String missingMessage) {
+        String[] parts = body.split("\\s*" + Pattern.quote(marker) + "\\s*", 2);
+        if (parts.length < 2) {
+            throw new IllegalArgumentException(missingMessage);
         }
-
-        String[] second = first[1].split("\\s*" + java.util.regex.Pattern.quote(endMarker) + "\\s*", 2);
-        if (second.length < 2) {
-            throw new IllegalArgumentException(missingEndMessage);
-        }
-
-        return second[0].trim();
+        return parts[0];
     }
 
     /**
@@ -283,24 +261,51 @@ public class Parser {
      * @throws IllegalArgumentException If marker is missing or value is blank.
      */
     private static String extractAfter(String body, String marker, String missingMessage) {
-        String[] parts = body.split("\\s*" + java.util.regex.Pattern.quote(marker) + "\\s*", 2);
+        String[] parts = body.split("\\s*" + Pattern.quote(marker) + "\\s*", 2);
         if (parts.length < 2 || parts[1].trim().isEmpty()) {
             throw new IllegalArgumentException(missingMessage);
         }
-        return parts[1].trim();
+        return parts[1];
     }
 
     /**
-     * Validates that description, from, and to fields are all present.
+     * Extracts the substring between two markers.
      *
-     * @param description Event description.
-     * @param fromRaw Raw {@code /from} text.
-     * @param toRaw Raw {@code /to} text.
-     * @throws IllegalArgumentException If any field is blank.
+     * @param body Command body.
+     * @param startMarker Marker to start after (e.g. {@code "/from"}).
+     * @param endMarker Marker to stop before (e.g. {@code "/to"}).
+     * @param missingStartMessage Error message if {@code startMarker} is missing.
+     * @param missingEndMessage Error message if {@code endMarker} is missing.
+     * @return Substring between the markers.
+     * @throws IllegalArgumentException If either marker is missing.
      */
-    private static void validateEventFields(String description, String fromRaw, String toRaw) {
-        if (description.isEmpty() || fromRaw.isEmpty() || toRaw.isEmpty()) {
-            throw new IllegalArgumentException("Event description/from/to missing");
+    private static String extractBetween(
+            String body,
+            String startMarker,
+            String endMarker,
+            String missingStartMessage,
+            String missingEndMessage
+    ) {
+        String afterStart = extractAfter(body, startMarker, missingStartMessage);
+        String[] parts = afterStart.split("\\s*" + Pattern.quote(endMarker) + "\\s*", 2);
+        if (parts.length < 2) {
+            throw new IllegalArgumentException(missingEndMessage);
+        }
+        return parts[0];
+    }
+
+    /**
+     * Parses a deadline date in ISO-8601 {@code yyyy-MM-dd}.
+     *
+     * @param raw Date string.
+     * @return Parsed {@link LocalDate}.
+     * @throws IllegalArgumentException If parsing fails.
+     */
+    private static LocalDate parseDate(String raw) {
+        try {
+            return LocalDate.parse(raw);
+        } catch (DateTimeParseException e) {
+            throw new IllegalArgumentException("Deadline date must be yyyy-MM-dd", e);
         }
     }
 
